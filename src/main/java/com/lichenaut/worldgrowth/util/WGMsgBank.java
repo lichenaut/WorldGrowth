@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,6 +28,12 @@ public class WGMsgBank {
     private BaseComponent[] helpCommand;
     private BaseComponent[] invalidCommand;
     private BaseComponent[] reloadCommand;
+    private BaseComponent[] onlyConsoleCommand;
+    private BaseComponent[] usageBoostCommand;
+    private BaseComponent[] boostedGains1;
+    private BaseComponent[] boostedGains2;
+    private BaseComponent[] boostedGains3;
+    private BaseComponent[] deboostedGains;
 
     public void loadLocaleMessages() throws IOException {
         properties.clear();
@@ -36,13 +43,19 @@ public class WGMsgBank {
             helpCommand = loadMessage("helpCommand");
             invalidCommand = loadMessage("invalidCommand");
             reloadCommand = loadMessage("reloadCommand");
+            onlyConsoleCommand = loadMessage("onlyConsoleCommand");
+            usageBoostCommand = loadMessage("usageBoostCommand");
+            boostedGains1 = loadMessage("boostedGains1");
+            boostedGains2 = loadMessage("boostedGains2");
+            boostedGains3 = loadMessage("boostedGains3");
+            deboostedGains = loadMessage("deboostedGains");
         }
     }
 
     private BaseComponent[] loadMessage(String key) {
         String message = properties.getProperty(key);
         if (message == null) {
-            plugin.getLogging().error("Missing message key: \"" + key + "\" in locale: \"" + locale + ".properties\".");
+            plugin.getLogging().error("Missing message key: \"{}\" in locale: \"{}.properties\".", key, locale);
             return new BaseComponent[]{new TextComponent("")};
         }
 
@@ -153,7 +166,7 @@ public class WGMsgBank {
         return combined;
     }
 
-    public ArrayList<Object> continueFormat(BaseComponent[] components) {
+    private static ArrayList<Object> continueFormat(BaseComponent[] components) {
         ArrayList<Object> format = new ArrayList<>();
         format.add(ChatColor.WHITE);
         format.add(null);
@@ -166,5 +179,11 @@ public class WGMsgBank {
             }
         }
         return format;
+    }
+
+    public BaseComponent[] concatArrays(BaseComponent[]... arrays) {
+        ArrayList<BaseComponent> resultList = new ArrayList<>();
+        for (BaseComponent[] array : arrays) resultList.addAll(Arrays.asList(array));
+        return resultList.toArray(new BaseComponent[0]);
     }
 }

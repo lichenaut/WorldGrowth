@@ -2,7 +2,48 @@
 disable-plugin: false
 
 
+##################
+#Configure Worlds#
+##################
 
+#Guide:
+
+world:
+  name: "world"
+  type: "minecraft:overworld"
+  start-size: 64
+  max-size: 16384
+  growth-multiplier: 8
+world_nether:
+  name: "world_nether"
+  type: "minecraft:the_nether"
+  start-size: 8
+  max-size: 2048
+  growth-multiplier: 1
+world_the_end:
+  name: "world_the_end"
+  type: "minecraft:the_end"
+  start-size: 64
+  max-size: 16384
+  growth-multiplier: 8
+
+
+#################
+#Global Settings#
+#################
+
+#Biome list: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/block/Biome.html
+main-world-starting-biome: "FLOWER_FOREST"
+
+main-world-starting-coords: #"0 0"
+
+growth-size: 16
+
+points-for-growth: 100
+
+max-growth-per-hour: 48
+
+scaling-difficulty: 50
 
 
 ###############
@@ -13,6 +54,8 @@ disable-plugin: false
   #Rewrite 'en.properties' if your language has not been added yet.
 locale: "en"
   #Help me support more languages by submitting translations: https://discord.gg/txJDdYcRV6
+
+broadcast-boosts: true
 
 #If empty, WorldGrowth will affect all worlds.
   #To disable the plugin completely, scroll to the top of this file and set 'disable-plugin' to true.
