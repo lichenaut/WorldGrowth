@@ -1,0 +1,12 @@
+name: WorldGrowth
+version: '${version}'
+main: com.lichenaut.worldgrowth.Main
+api-version: '1.20'
+author: lichenaut
+description:
+  WorldGrowth sets and expands world borders as a gameplay mechanic.
+commands:
+  worldgrowth:
+    description: Base command for WorldGrowth.
+    permission: worldgrowth.command
+    aliases: [wg]
