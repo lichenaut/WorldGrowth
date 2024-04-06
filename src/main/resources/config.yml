@@ -10,19 +10,16 @@ disable-plugin: false
 
 world:
   name: "world"
-  type: "minecraft:overworld"
   start-size: 64
   max-size: 16384
   growth-multiplier: 8
 world_nether:
   name: "world_nether"
-  type: "minecraft:the_nether"
   start-size: 8
   max-size: 2048
   growth-multiplier: 1
 world_the_end:
   name: "world_the_end"
-  type: "minecraft:the_end"
   start-size: 64
   max-size: 16384
   growth-multiplier: 8
@@ -55,6 +52,7 @@ scaling-difficulty: 50
 locale: "en"
   #Help me support more languages by submitting translations: https://discord.gg/txJDdYcRV6
 
+#If true, WorldGrowth will broadcast point gain boost event starts and ends.
 broadcast-boosts: true
 
 #If empty, WorldGrowth will affect all worlds.
@@ -63,3 +61,190 @@ restrict-plugin-to-worlds:
 #  - "world"
 #  - "world_nether"
 #  - "world_the_end"
+
+
+##############
+#Point System#
+##############
+
+#Event list: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/event/Event.html
+  #Only events that come with this plugin are supported.
+
+#BlockEvent
+bell-resonate:
+bell-ring:
+block-break:
+  quota: 128
+  points: 1
+block-burn:
+block-can-build:
+block-cook:
+  quota: 64
+  points: 1
+block-damage-abort:
+block-damage:
+block-dispense:
+block-dispense-armor:
+block-drop-item:
+block-exp:
+  quota: 16
+  points: 1
+block-explode:
+block-fade:
+block-fertilize:
+  quota: 512
+  points: 1
+block-from-to:
+block-grow:
+  quota: 4096
+  points: 1
+block-ignite:
+block-physics:
+block-piston:
+block-place:
+block-receive-game:
+block-redstone:
+block-shear-entity:
+brew:
+brewing-stand-fuel:
+cauldron-level-change:
+fluid-level-change:
+furnace-burn:
+furnace-extract:
+furnace-smelt:
+hopper-inventory-search:
+inventory-block-start:
+leaves-decay:
+moisture-change:
+note-play:
+sculk-bloom:
+sign-change:
+sponge-absorb:
+tnt-prime:
+
+#EntityEvent
+area-effect-cloud-apply:
+arrow-body-count-change:
+bat-toggle-sleep:
+creeper-power:
+ender-dragon-change-phase:
+entity-air-change:
+entity-breed:
+entity-change-block:
+entity-combust:
+entity-create-portal:
+entity-damage:
+entity-death:
+entity-dismount:
+entity-drop-item:
+entity-enter-block:
+entity-enter-love-mode:
+entity-exhaustion:
+entity-explode:
+entity-interact:
+entity-knockback:
+entity-mount:
+entity-pickup-item:
+entity-place:
+entity-portal-enter:
+entity-pose-change:
+entity-potion-effect:
+entity-regain-health:
+entity-remove:
+entity-resurrect:
+entity-shoot-bow:
+entity-spawn:
+entity-spell-cast:
+entity-tame:
+entity-target:
+entity-teleport:
+entity-toggle-glide:
+entity-toggle-swim:
+entity-transform:
+entity-unleash:
+explosion-prime:
+firework-explode:
+food-level-change:
+horse-jump:
+item-despawn:
+item-merge:
+piglin-barter:
+pig-zombie-anger:
+projectile-hit:
+sheep-dye-wool:
+sheep-regrow-wool:
+slime-split:
+strider-temperature-change:
+villager-acquire-trade:
+villager-career-change:
+villager-replenish-trade:
+
+#PlayerEvent
+async-player-chat:
+player-advancement-done:
+  quota: 1
+  points: 1
+player-animation:
+player-bed-enter:
+player-bed-leave:
+player-bucket-entity:
+player-bucket:
+player-changed-main-hand:
+player-changed-world:
+player-channel:
+player-chat:
+player-chat-tab-complete:
+player-command-preprocess:
+player-command-send:
+player-drop-item:
+player-edit-book:
+player-egg-throw:
+player-exp-change:
+player-exp-cooldown-change:
+player-fish:
+player-game-mode-change:
+player-harvest-block:
+player-hide-entity:
+player-interact-entity:
+player-interact:
+player-item-break:
+player-item-consume:
+player-item-damage:
+player-item-held:
+player-item-mend:
+player-join:
+player-kick:
+player-level-change:
+player-locale-change:
+player-login:
+player-move:
+player-pickup-item:
+player-quit:
+player-recipe-book-click:
+player-recipe-book-settings-change:
+player-recipe-discover:
+player-resource-pack-status:
+player-respawn:
+player-riptide:
+player-shear-entity:
+player-show-entity:
+player-sign-open:
+player-spawn-change:
+player-spawn-location:
+player-statistic-increment:
+player-swap-hand-items:
+player-take-lectern-book:
+player-toggle-flight:
+player-toggle-sneak:
+player-toggle-sprint:
+player-velocity:
+
+#VehicleEvent
+vehicle-collision:
+vehicle-create:
+vehicle-damage:
+vehicle-destroy:
+vehicle-enter:
+vehicle-exit:
+vehicle-move:
+vehicle-update:

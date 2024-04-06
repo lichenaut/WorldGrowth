@@ -1,7 +1,7 @@
 package com.lichenaut.worldgrowth.cmd;
 
 import com.lichenaut.worldgrowth.Main;
-import com.lichenaut.worldgrowth.util.WGAsyncRunnabler;
+import com.lichenaut.worldgrowth.util.WGRunnableManager;
 import com.lichenaut.worldgrowth.util.WGMsgBank;
 import com.lichenaut.worldgrowth.util.WGRunnable;
 import lombok.RequiredArgsConstructor;
@@ -59,7 +59,7 @@ public class WGCommand implements CommandExecutor {
                 }
 
                 long delay = Integer.parseInt(strings[2]);
-                WGAsyncRunnabler boosterManager = plugin.getBoosterManager();
+                WGRunnableManager boosterManager = plugin.getBoosterManager();
                 boosterManager.addRunnable(new WGRunnable(new BukkitRunnable() {
                     @Override
                     public void run() {

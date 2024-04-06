@@ -4,25 +4,25 @@ import com.lichenaut.worldgrowth.Main;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.LinkedList;
 
 @RequiredArgsConstructor
-public class WGAsyncRunnabler {
+public class WGRunnableManager {
 
     private final Main plugin;
-    private final ConcurrentLinkedQueue<WGRunnable> runnableQueue = new ConcurrentLinkedQueue<>();
+    private final LinkedList<WGRunnable> runnableQueue = new LinkedList<>();
     private BukkitTask currentTask;
 
-    public synchronized void addRunnable(WGRunnable runnable) {
+    public void addRunnable(WGRunnable runnable) {
         runnableQueue.offer(runnable);
         if (currentTask == null) scheduleNextRunnable();
     }
 
-    private synchronized void scheduleNextRunnable() {
+    private void scheduleNextRunnable() {
         WGRunnable runnable = runnableQueue.poll();
         if (runnable == null) return;
 
-        currentTask = plugin.getServer().getScheduler().runTaskLaterAsynchronously(plugin, () -> {
+        currentTask = plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             try {
                 runnable.run();
             } finally {
@@ -32,5 +32,5 @@ public class WGAsyncRunnabler {
         }, runnable.delay());
     }
 
-    public synchronized void serializeQueue() {}
+    public void serializeQueue() {}
 }

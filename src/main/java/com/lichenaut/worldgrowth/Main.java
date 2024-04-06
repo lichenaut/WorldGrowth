@@ -4,8 +4,9 @@ import com.lichenaut.worldgrowth.cmd.WGCommand;
 import com.lichenaut.worldgrowth.cmd.WGTabCompleter;
 import com.lichenaut.worldgrowth.util.WGCopier;
 import com.lichenaut.worldgrowth.util.WGMsgBank;
-import com.lichenaut.worldgrowth.util.WGAsyncRunnabler;
+import com.lichenaut.worldgrowth.util.WGRunnableManager;
 import lombok.Getter;
+import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bukkit.configuration.Configuration;
@@ -18,6 +19,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 
 @Getter
+@Setter
 @SuppressWarnings("unused")
 public final class Main extends JavaPlugin {
 
@@ -27,7 +29,7 @@ public final class Main extends JavaPlugin {
     private final String separator = FileSystems.getDefault().getSeparator();
     private Configuration configuration;
     private int boostMultiplier = 1;
-    WGAsyncRunnabler boosterManager = new WGAsyncRunnabler(this);
+    WGRunnableManager boosterManager = new WGRunnableManager(this);
 
     @Override
     public void onEnable() {
@@ -70,7 +72,4 @@ public final class Main extends JavaPlugin {
     public void onDisable() {
         boosterManager.serializeQueue();
     }
-
-    public synchronized void setBoostMultiplier(int multiplier) {boostMultiplier = multiplier;}
-    public synchronized int getBoostMultiplier() {return boostMultiplier;}
 }
