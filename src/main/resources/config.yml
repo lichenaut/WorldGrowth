@@ -2,45 +2,56 @@
 disable-plugin: false
 
 
-##################
-#Configure Worlds#
-##################
+################
+#World Settings#
+################
 
-#Guide:
+#Guide: https://github.com/lichenaut/WorldGrowth/blob/main/README.md#World
 
-world:
-  name: "world"
-  start-size: 64
-  max-size: 16384
-  growth-multiplier: 8
-world_nether:
-  name: "world_nether"
-  start-size: 8
-  max-size: 2048
-  growth-multiplier: 1
-world_the_end:
-  name: "world_the_end"
-  start-size: 64
-  max-size: 16384
-  growth-multiplier: 8
+worlds:
+  world:
+    main: true
+    name: "world"
+    start-size: 64
+    max-size: 16384
+    growth-multiplier: 8
+  world_nether:
+    name: "world_nether"
+    start-size: 8
+    max-size: 2048
+    growth-multiplier: 1
+  world_the_end:
+    name: "world_the_end"
+    start-size: 64
+    max-size: 16384
+    growth-multiplier: 8
 
 
-#################
-#Global Settings#
-#################
+#####################
+#Main World Settings#
+#####################
 
-#Biome list: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/block/Biome.html
-main-world-starting-biome: "FLOWER_FOREST"
+#If true, WorldGrowth will attempt to find a biome of this type from (0, 0). If it fails, it will use the default world spawn.
+  #Biome list: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/block/Biome.html
+starting-biome: "FLOWER_FOREST"
 
-main-world-starting-coords: #"0 0"
+#If uncommented, WorldGrowth will use these coordinates as the starting point.
+starting-coords: #"0 0"
 
-growth-size: 16
+#The amount of blocks the diameter of the world border will grow per growth. Don't forget about 'growth-multiplier's!
+growth-size: 4
 
-points-for-growth: 100
+#The maximum amount of blocks the world border can grow per hour.
+max-block-growth-per-hour: 96
 
-max-growth-per-hour: 48
+#The starting amount of points required to trigger a growth.
+starting-growth-quota: 16
 
-scaling-difficulty: 50
+#The amount of points required to trigger a growth will increase by this amount each growth.
+increment-growth-quota-by: 8
+
+#The maximum amount of points required to trigger a growth.
+max-growth-quota: 1024
 
 
 ###############
@@ -68,183 +79,275 @@ restrict-plugin-to-worlds:
 ##############
 
 #Event list: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/event/Event.html
-  #Only events that come with this plugin are supported.
+  #You cannot add event types.
 
-#BlockEvent
-bell-resonate:
-bell-ring:
-block-break:
-  quota: 128
-  points: 1
-block-burn:
-block-can-build:
-block-cook:
-  quota: 64
-  points: 1
-block-damage-abort:
-block-damage:
-block-dispense:
-block-dispense-armor:
-block-drop-item:
-block-exp:
-  quota: 16
-  points: 1
-block-explode:
-block-fade:
-block-fertilize:
-  quota: 512
-  points: 1
-block-from-to:
-block-grow:
-  quota: 4096
-  points: 1
-block-ignite:
-block-physics:
-block-piston:
-block-place:
-block-receive-game:
-block-redstone:
-block-shear-entity:
-brew:
-brewing-stand-fuel:
-cauldron-level-change:
-fluid-level-change:
-furnace-burn:
-furnace-extract:
-furnace-smelt:
-hopper-inventory-search:
-inventory-block-start:
-leaves-decay:
-moisture-change:
-note-play:
-sculk-bloom:
-sign-change:
-sponge-absorb:
-tnt-prime:
+block-events:
+  bell-resonate:
+  bell-ring:
+  block-break:
+    quota: 128
+    points: 1
+  block-burn:
+  block-can-build:
+  block-cook:
+    quota: 128
+    points: 1
+  block-damage-abort:
+  block-damage:
+  block-dispense:
+  block-dispense-armor:
+  block-drop-item:
+  block-exp:
+    quota: 24
+    points: 1
+  block-explode:
+  block-fade:
+  block-fertilize:
+    quota: 576
+    points: 1
+  block-from-to:
+  block-grow:
+    quota: 1024
+    points: 1
+  block-ignite:
+  block-multi-place:
+  block-physics:
+  block-piston:
+  block-place:
+    quota: 256
+    points: 1
+  block-receive-game:
+  block-redstone:
+  block-shear-entity:
+    quota: 24
+    points: 1
+  brew:
+    quota: 16
+    points: 1
+  brewing-stand-fuel:
+  cauldron-level-change:
+  fluid-level-change:
+  furnace-burn:
+  furnace-extract:
+  furnace-smelt:
+  hopper-inventory-search:
+  inventory-block-start:
+  leaves-decay:
+    quota: 256
+    points: 1
+  moisture-change:
+  note-play:
+  sculk-bloom:
+  sign-change:
+  sponge-absorb:
+  tnt-prime:
 
-#EntityEvent
-area-effect-cloud-apply:
-arrow-body-count-change:
-bat-toggle-sleep:
-creeper-power:
-ender-dragon-change-phase:
-entity-air-change:
-entity-breed:
-entity-change-block:
-entity-combust:
-entity-create-portal:
-entity-damage:
-entity-death:
-entity-dismount:
-entity-drop-item:
-entity-enter-block:
-entity-enter-love-mode:
-entity-exhaustion:
-entity-explode:
-entity-interact:
-entity-knockback:
-entity-mount:
-entity-pickup-item:
-entity-place:
-entity-portal-enter:
-entity-pose-change:
-entity-potion-effect:
-entity-regain-health:
-entity-remove:
-entity-resurrect:
-entity-shoot-bow:
-entity-spawn:
-entity-spell-cast:
-entity-tame:
-entity-target:
-entity-teleport:
-entity-toggle-glide:
-entity-toggle-swim:
-entity-transform:
-entity-unleash:
-explosion-prime:
-firework-explode:
-food-level-change:
-horse-jump:
-item-despawn:
-item-merge:
-piglin-barter:
-pig-zombie-anger:
-projectile-hit:
-sheep-dye-wool:
-sheep-regrow-wool:
-slime-split:
-strider-temperature-change:
-villager-acquire-trade:
-villager-career-change:
-villager-replenish-trade:
+entity-events:
+  area-effect-cloud-apply:
+    quota: 480
+    points: 1
+  arrow-body-count-change:
+    quota: 32
+    points: 1
+  bat-toggle-sleep:
+  creeper-power:
+    quota: 1
+    points: 4
+  ender-dragon-change-phase:
+    quota: 2
+    points: 1
+  entity-air-change:
+  entity-breed:
+    quota: 16
+    points: 1
+  entity-change-block:
+  entity-combust:
+  entity-combust-by-block:
+  entity-combust-by-entity:
+    quota: 8
+    points: 1
+  entity-damage:
+  entity-damage-by-block:
+    quota: 32
+    points: 1
+  entity-damage-by-entity:
+    quota: 16
+    points: 1
+  entity-death:
+    quota: 32
+    points: 1
+  entity-dismount:
+  entity-drop-item:
+    quota: 128
+    points: 1
+  entity-enter-block:
+    quota: 16
+    points: 1
+  entity-enter-love-mode:
+  entity-exhaustion:
+    quota: 512
+    points: 1
+  entity-explode:
+    quota: 215
+    points: 1
+  entity-interact:
+  entity-knockback:
+  entity-mount:
+  entity-pickup-item:
+  entity-place:
+    quota: 256
+    points: 1
+  entity-portal-enter:
+    quota: 32
+    points: 1
+  entity-pose-change:
+  entity-potion-effect:
+    quota: 215
+    points: 1
+  entity-regain-health:
+    quota: 512
+    points: 1
+  entity-remove:
+  entity-resurrect:
+    quota: 1
+    points: 2
+  entity-shoot-bow:
+    quota: 128
+    points: 1
+  entity-spawn:
+    quota: 128
+    points: 1
+  entity-spell-cast:
+    quota: 4
+    points: 1
+  entity-tame:
+    quota: 2
+    points: 1
+  entity-target:
+  entity-teleport:
+    quota: 32
+    points: 1
+  entity-toggle-glide:
+  entity-toggle-swim:
+  entity-transform:
+    quota: 32
+    points: 1
+  entity-unleash:
+  exp-bottle:
+    quota: 8
+    points: 1
+  explosion-prime:
+  firework-explode:
+    quota: 128
+    points: 1
+  food-level-change:
+  horse-jump:
+  item-despawn:
+  item-merge:
+  lingering-potion-splash:
+    quota: 16
+    points: 1
+  piglin-barter:
+    quota: 24
+    points: 1
+  pig-zap:
+  pig-zombie-anger:
+    quota: 32
+    points: 1
+  player-death:
+    quota: 4
+    points: 1
+  potion-splash:
+    quota: 16
+    points: 1
+  projectile-hit:
+  sheep-dye-wool:
+    quota: 256
+    points: 1
+  sheep-regrow-wool:
+    quota: 24
+    points: 1
+  slime-split:
+  strider-temperature-change:
+  villager-acquire-trade:
+    quota: 8
+    points: 1
+  villager-career-change:
+  villager-replenish-trade:
+    quota: 16
+    points: 1
 
-#PlayerEvent
-async-player-chat:
-player-advancement-done:
-  quota: 1
-  points: 1
-player-animation:
-player-bed-enter:
-player-bed-leave:
-player-bucket-entity:
-player-bucket:
-player-changed-main-hand:
-player-changed-world:
-player-channel:
-player-chat:
-player-chat-tab-complete:
-player-command-preprocess:
-player-command-send:
-player-drop-item:
-player-edit-book:
-player-egg-throw:
-player-exp-change:
-player-exp-cooldown-change:
-player-fish:
-player-game-mode-change:
-player-harvest-block:
-player-hide-entity:
-player-interact-entity:
-player-interact:
-player-item-break:
-player-item-consume:
-player-item-damage:
-player-item-held:
-player-item-mend:
-player-join:
-player-kick:
-player-level-change:
-player-locale-change:
-player-login:
-player-move:
-player-pickup-item:
-player-quit:
-player-recipe-book-click:
-player-recipe-book-settings-change:
-player-recipe-discover:
-player-resource-pack-status:
-player-respawn:
-player-riptide:
-player-shear-entity:
-player-show-entity:
-player-sign-open:
-player-spawn-change:
-player-spawn-location:
-player-statistic-increment:
-player-swap-hand-items:
-player-take-lectern-book:
-player-toggle-flight:
-player-toggle-sneak:
-player-toggle-sprint:
-player-velocity:
-
-#VehicleEvent
-vehicle-collision:
-vehicle-create:
-vehicle-damage:
-vehicle-destroy:
-vehicle-enter:
-vehicle-exit:
-vehicle-move:
-vehicle-update:
+player-event:
+  async-player-chat:
+  async-player-chat-preview:
+  player-advancement-done:
+    quota: 1
+    points: 1
+  player-animation:
+  player-bed-enter:
+  player-bed-leave:
+  player-bucket-entity:
+  player-bucket:
+  player-changed-main-hand:
+  player-changed-world:
+    quota: 32
+    points: 1
+  player-channel:
+  player-command-send:
+  player-drop-item:
+  player-edit-book:
+  player-egg-throw:
+    quota: 128
+    points: 1
+  player-exp-change:
+    quota: 1024
+    points: 1
+  player-exp-cooldown-change:
+  player-fish:
+    quota: 256
+    points: 1
+  player-game-mode-change:
+  player-harvest-block:
+    quota: 128
+    points: 1
+  player-hide-entity:
+  player-interact-entity:
+  player-interact:
+  player-item-break:
+    quota: 4
+    points: 1
+  player-item-consume:
+    quota: 128
+    points: 1
+  player-item-damage:
+  player-item-held:
+  player-item-mend:
+  player-join:
+  player-kick:
+  player-level-change:
+  player-locale-change:
+  player-login:
+  player-move:
+  player-quit:
+  player-recipe-book-click:
+  player-recipe-book-settings-change:
+  player-recipe-discover:
+  player-resource-pack-status:
+  player-respawn:
+  player-riptide:
+    quota: 32
+    points: 1
+  player-shear-entity:
+    quota: 32
+    points: 1
+  player-show-entity:
+  player-sign-open:
+  player-spawn-location:
+  player-statistic-increment:
+  player-swap-hand-items:
+  player-take-lectern-book:
+  player-teleport:
+  player-toggle-flight:
+  player-toggle-sneak:
+  player-toggle-sprint:
+  player-velocity:

@@ -8,6 +8,8 @@ import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.ComponentStyle;
 import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,7 +22,7 @@ import java.util.regex.Pattern;
 
 @Getter
 @RequiredArgsConstructor
-public class WGMsgBank {
+public class WGMessager {
 
     private final Main plugin;
     private final Properties properties = new Properties();
@@ -143,6 +145,24 @@ public class WGMsgBank {
         }
         builder.append(" ");
         return builder.create();
+    }
+
+    public void sendMsg(CommandSender sender, BaseComponent[] message) {
+        if (sender instanceof Player) {
+            sender.spigot().sendMessage(message);
+            return;
+        }
+
+        infoLog(message);
+    }
+
+    public void spreadMsg(boolean broadcast, BaseComponent[] message) {
+        if (broadcast) plugin.getServer().spigot().broadcast(message);
+        infoLog(message);
+    }
+
+    private void infoLog(BaseComponent[] message) {
+        plugin.getLogging().info(new TextComponent(message).toLegacyText().replaceAll("§[0-9a-fA-FklmnoKLMNO]", ""));
     }
 
     public BaseComponent[] combineMessage(BaseComponent[] msgComponent, String msgString) {

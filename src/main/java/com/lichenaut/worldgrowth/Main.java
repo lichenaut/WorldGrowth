@@ -3,7 +3,7 @@ package com.lichenaut.worldgrowth;
 import com.lichenaut.worldgrowth.cmd.WGCommand;
 import com.lichenaut.worldgrowth.cmd.WGTabCompleter;
 import com.lichenaut.worldgrowth.util.WGCopier;
-import com.lichenaut.worldgrowth.util.WGMsgBank;
+import com.lichenaut.worldgrowth.util.WGMessager;
 import com.lichenaut.worldgrowth.util.WGRunnableManager;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,7 +25,7 @@ public final class Main extends JavaPlugin {
 
     private final Main plugin = this;
     private final Logger logging = LogManager.getLogger("WorldGrowth");
-    private final WGMsgBank msgBank = new WGMsgBank(this);
+    private final WGMessager messager = new WGMessager(this);
     private final String separator = FileSystems.getDefault().getSeparator();
     private Configuration configuration;
     private int boostMultiplier = 1;
@@ -37,7 +37,7 @@ public final class Main extends JavaPlugin {
         getConfig().options().copyDefaults();
         saveDefaultConfig();
         reloadWG();
-        Objects.requireNonNull(getCommand("wg")).setExecutor(new WGCommand(this, msgBank));
+        Objects.requireNonNull(getCommand("wg")).setExecutor(new WGCommand(this, messager));
         Objects.requireNonNull(getCommand("wg")).setTabCompleter(new WGTabCompleter());
     }
 
@@ -61,7 +61,7 @@ public final class Main extends JavaPlugin {
         }
 
         try {
-            msgBank.loadLocaleMessages();
+            messager.loadLocaleMessages();
         } catch (IOException e) {
             logging.error("Error while loading locale messages.");
             throw new RuntimeException(e);
