@@ -59,8 +59,8 @@ max-block-growth-per-hour: 96
 ###############
 
 #WorldGrowth stores information like boosts, event counts, and growth quotas so that they are persistent across server restarts.
-  #WorldGrowth will store this information locally if a database is not provided.
-database-url: #"jdbc:mysql://localhost/example_db"
+  #WorldGrowth will store this information locally if a MySQL database is not provided.
+database-url: #"localhost:3306/example_db"
 database-username: #"root"
 database-password: #""
 

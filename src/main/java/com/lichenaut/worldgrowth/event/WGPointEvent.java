@@ -1,15 +1,20 @@
 package com.lichenaut.worldgrowth.event;
 
-import com.lichenaut.worldgrowth.Main;
+import com.lichenaut.worldgrowth.util.WGDatabaseManager;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.event.Event;
+import org.bukkit.event.Listener;
+
+import java.sql.SQLException;
 
 @RequiredArgsConstructor
-public class WGPointEvent {
+public abstract class WGPointEvent<T extends Event> implements Listener {
 
-    private final Main plugin;
+    protected final WGDatabaseManager databaseManager;
 
-    private void processEvent(Event event) {
+    protected abstract void onEvent(T event) throws SQLException;
 
+    protected void incrementCount() throws SQLException {
+        databaseManager.incrementEvent(this.getClass().getSimpleName());
     }
 }

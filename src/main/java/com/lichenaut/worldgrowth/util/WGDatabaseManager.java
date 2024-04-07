@@ -34,4 +34,9 @@ public class WGDatabaseManager {
                 "CREATE TABLE IF NOT EXISTS `global` " +
                         "(`quota` int NOT NULL, `points` int NOT NULL)");
     }
+
+    public void incrementEvent(String type) throws SQLException {
+        connection.createStatement().execute("INSERT INTO `events` (`type`, `count`) VALUES ('" + type + "', 1) " +
+                "ON DUPLICATE KEY UPDATE `count` = `count` + 1");
+    }
 }

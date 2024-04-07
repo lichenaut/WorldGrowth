@@ -59,25 +59,28 @@ public final class Main extends JavaPlugin {
         String username = configuration.getString("database-username");
         String password = configuration.getString("database-password");
         if (url != null && username != null && password != null) {
+            String finalUrl = "jdbc:mysql://" + url + "?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
             databaseManager = new WGDatabaseManager();
-            CompletableFuture.runAsync(() -> {
+            CompletableFuture
+                    .runAsync(() -> {
                         try {
-                            databaseManager.updateConnection(url, username, password);
+                            databaseManager.updateConnection(finalUrl, username, password);
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
                     })
-                    .thenRunAsync(() -> {
+                    .thenComposeAsync(connection -> CompletableFuture.runAsync(() -> {
                         try {
                             databaseManager.createStructure();
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
-                    })
-                    .thenAcceptAsync(result -> logging.info("Database connected and structured."))
+                    }))
+                    .thenAcceptAsync(result -> logging.info("Database up and running."))
                     .exceptionallyAsync(e -> {
-                        logging.error("Error connecting to database.");
+                        logging.error("Error while trying to connect to database!");
                         logging.error(e);
+                        databaseManager = null;
                         return null;
                     });
         } else {
