@@ -1,9 +1,8 @@
 package com.lichenaut.worldgrowth.cmd;
 
 import com.lichenaut.worldgrowth.Main;
-import com.lichenaut.worldgrowth.util.WGRunnableManager;
+import com.lichenaut.worldgrowth.runnable.WGRunnableManager;
 import com.lichenaut.worldgrowth.util.WGMessager;
-import com.lichenaut.worldgrowth.util.WGRunnable;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -58,7 +57,7 @@ public class WGCommand implements CommandExecutor {
 
                 long delay = Integer.parseInt(strings[2]);
                 WGRunnableManager boosterManager = plugin.getBoosterManager();
-                boosterManager.addRunnable(new WGRunnable(new BukkitRunnable() {
+                boosterManager.addRunnable(new BukkitRunnable() {
                     @Override
                     public void run() {
                         plugin.setBoostMultiplier(Integer.parseInt(multiplier));
@@ -67,14 +66,14 @@ public class WGCommand implements CommandExecutor {
                                 messager.combineMessage(messager.getBoostedGains2(), String.format("%.2f", (double) delay / 1200)),
                                 messager.getBoostedGains3()));
                     }
-                }, 0L));
-                boosterManager.addRunnable(new WGRunnable(new BukkitRunnable() {
+                }, 0L);
+                boosterManager.addRunnable(new BukkitRunnable() {
                     @Override
                     public void run() {
                         plugin.setBoostMultiplier(1);
                         messager.spreadMsg(plugin.getConfiguration().getBoolean("broadcast-boosts"), messager.getDeboostedGains());
                     }
-                }, delay));
+                }, delay);
                 return true;
             }
         }

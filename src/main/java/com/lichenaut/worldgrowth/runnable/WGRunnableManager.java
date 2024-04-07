@@ -1,7 +1,8 @@
-package com.lichenaut.worldgrowth.util;
+package com.lichenaut.worldgrowth.runnable;
 
 import com.lichenaut.worldgrowth.Main;
 import lombok.RequiredArgsConstructor;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.LinkedList;
@@ -13,8 +14,8 @@ public class WGRunnableManager {
     private final LinkedList<WGRunnable> runnableQueue = new LinkedList<>();
     private BukkitTask currentTask;
 
-    public void addRunnable(WGRunnable runnable) {
-        runnableQueue.offer(runnable);
+    public void addRunnable(BukkitRunnable bukkitRunnable, long delay) {
+        runnableQueue.offer(new WGRunnable(bukkitRunnable, delay));
         if (currentTask == null) scheduleNextRunnable();
     }
 
@@ -32,5 +33,5 @@ public class WGRunnableManager {
         }, runnable.delay());
     }
 
-    public void serializeQueue() {}
+    //public void serializeQueue() {}
 }
