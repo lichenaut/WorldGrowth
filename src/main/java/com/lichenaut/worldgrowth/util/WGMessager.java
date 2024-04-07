@@ -37,10 +37,10 @@ public class WGMessager {
     private BaseComponent[] boostedGains3;
     private BaseComponent[] deboostedGains;
 
-    public void loadLocaleMessages() throws IOException {
+    public void loadLocaleMessages(String localesFolderString) throws IOException {
         properties.clear();
         locale = plugin.getConfiguration().getString("locale");
-        try (FileInputStream inputStream = new FileInputStream(new File(plugin.getDataFolder(), "locales" + plugin.getSeparator() + locale + ".properties"))) {
+        try (FileInputStream inputStream = new FileInputStream(new File(localesFolderString, locale + ".properties"))) {
             properties.load(inputStream);
             helpCommand = loadMessage("helpCommand");
             invalidCommand = loadMessage("invalidCommand");

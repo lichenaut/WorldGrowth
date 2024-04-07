@@ -3,6 +3,7 @@ package com.lichenaut.worldgrowth;
 import com.lichenaut.worldgrowth.cmd.WGCommand;
 import com.lichenaut.worldgrowth.cmd.WGTabCompleter;
 import com.lichenaut.worldgrowth.util.WGCopier;
+import com.lichenaut.worldgrowth.util.WGDatabaseManager;
 import com.lichenaut.worldgrowth.util.WGMessager;
 import com.lichenaut.worldgrowth.util.WGRunnableManager;
 import lombok.Getter;
@@ -10,6 +11,7 @@ import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bukkit.configuration.Configuration;
+import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.IOException;
@@ -17,6 +19,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 @Getter
 @Setter
@@ -30,6 +33,7 @@ public final class Main extends JavaPlugin {
     private Configuration configuration;
     private int boostMultiplier = 1;
     WGRunnableManager boosterManager = new WGRunnableManager(this);
+    WGDatabaseManager databaseManager;
 
     @Override
     public void onEnable() {
@@ -42,6 +46,8 @@ public final class Main extends JavaPlugin {
     }
 
     public void reloadWG() {
+        HandlerList.unregisterAll(this);
+
         reloadConfig();
         configuration = getConfig();
         if (configuration.getBoolean("disable-plugin")) {
@@ -49,9 +55,39 @@ public final class Main extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
         }
 
+        String url = configuration.getString("database-url");
+        String username = configuration.getString("database-username");
+        String password = configuration.getString("database-password");
+        if (url != null && username != null && password != null) {
+            databaseManager = new WGDatabaseManager();
+            CompletableFuture.runAsync(() -> {
+                        try {
+                            databaseManager.updateConnection(url, username, password);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
+                    .thenRunAsync(() -> {
+                        try {
+                            databaseManager.createStructure();
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
+                    .thenAcceptAsync(result -> logging.info("Database connected and structured."))
+                    .exceptionallyAsync(e -> {
+                        logging.error("Error connecting to database.");
+                        logging.error(e);
+                        return null;
+                    });
+        } else {
+            databaseManager = null;
+            logging.info("Database information not given. Storing information locally.");
+        }
+
         String localesFolderString = getDataFolder().getPath() + separator + "locales";
-        Path localesFolderPath = Path.of(localesFolderString);
         try {
+            Path localesFolderPath = Path.of(localesFolderString);
             if (!Files.exists(localesFolderPath)) Files.createDirectory(localesFolderPath);
             String[] localeFiles = {separator + "de.properties", separator + "en.properties", separator + "es.properties", separator + "fr.properties"};
             for (String locale : localeFiles) WGCopier.smallCopy(getResource("locales" + locale), localesFolderString + locale);
@@ -59,9 +95,8 @@ public final class Main extends JavaPlugin {
             logging.error("Error while creating locale files.");
             throw new RuntimeException(e);
         }
-
         try {
-            messager.loadLocaleMessages();
+            messager.loadLocaleMessages(localesFolderString);
         } catch (IOException e) {
             logging.error("Error while loading locale messages.");
             throw new RuntimeException(e);
@@ -70,6 +105,7 @@ public final class Main extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        boosterManager.serializeQueue();
+        //databaseManager.closeConnection();
+        //boosterManager.serializeQueue();
     }
 }

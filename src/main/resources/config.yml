@@ -38,12 +38,6 @@ starting-biome: "FLOWER_FOREST"
 #If uncommented, WorldGrowth will use these coordinates as the starting point.
 starting-coords: #"0 0"
 
-#The amount of blocks the diameter of the world border will grow per growth. Don't forget about 'growth-multiplier's!
-growth-size: 4
-
-#The maximum amount of blocks the world border can grow per hour.
-max-block-growth-per-hour: 96
-
 #The starting amount of points required to trigger a growth.
 starting-growth-quota: 16
 
@@ -53,10 +47,29 @@ increment-growth-quota-by: 8
 #The maximum amount of points required to trigger a growth.
 max-growth-quota: 1024
 
+#The amount of blocks the diameter of the world border will grow per growth. Don't forget about 'growth-multiplier's!
+growth-size: 4
+
+#The maximum amount of blocks the world border can grow per hour.
+max-block-growth-per-hour: 96
+
 
 ###############
 #Miscellaneous#
 ###############
+
+#WorldGrowth stores information like boosts, event counts, and growth quotas so that they are persistent across server restarts.
+  #WorldGrowth will store this information locally if a database is not provided.
+database-url: #"jdbc:mysql://localhost/example_db"
+database-username: #"root"
+database-password: #""
+
+#If empty, WorldGrowth will affect all worlds.
+#To disable the plugin completely, scroll to the top of this file and set 'disable-plugin' to true.
+restrict-plugin-to-worlds:
+#  - "world"
+#  - "world_nether"
+#  - "world_the_end"
 
 #Locale for WorldGrowth messages.
   #Rewrite 'en.properties' if your language has not been added yet.
@@ -66,13 +79,6 @@ locale: "en"
 #If true, WorldGrowth will broadcast point gain boost event starts and ends.
 broadcast-boosts: true
 
-#If empty, WorldGrowth will affect all worlds.
-  #To disable the plugin completely, scroll to the top of this file and set 'disable-plugin' to true.
-restrict-plugin-to-worlds:
-#  - "world"
-#  - "world_nether"
-#  - "world_the_end"
-
 
 ##############
 #Point System#
@@ -81,7 +87,8 @@ restrict-plugin-to-worlds:
 #Event list: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/event/Event.html
   #You cannot add event types.
 
-block-events:
+events:
+  #BlockEvent
   bell-resonate:
   bell-ring:
   block-break:
@@ -142,7 +149,7 @@ block-events:
   sponge-absorb:
   tnt-prime:
 
-entity-events:
+  #EntityEvent
   area-effect-cloud-apply:
     quota: 480
     points: 1
@@ -277,7 +284,7 @@ entity-events:
     quota: 16
     points: 1
 
-player-event:
+  #PlayerEvent
   async-player-chat:
   async-player-chat-preview:
   player-advancement-done:
