@@ -1,13 +1,8 @@
 package com.lichenaut.worldgrowth.db;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
 import java.sql.*;
 
-@Getter
-@RequiredArgsConstructor
-public class WGDatabaseManager {
+public class WGMySQLManager implements WGDBManager {
 
     private Connection connection;
 
@@ -68,7 +63,7 @@ public class WGDatabaseManager {
             if (resultSet.next()) {
                 return resultSet.getInt("points");
             } else {
-                throw new SQLException("No points found in the database");
+                throw new RuntimeException();
             }
         }
     }

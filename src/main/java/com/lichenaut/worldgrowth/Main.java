@@ -2,7 +2,9 @@ package com.lichenaut.worldgrowth;
 
 import com.lichenaut.worldgrowth.cmd.WGCommand;
 import com.lichenaut.worldgrowth.cmd.WGTabCompleter;
-import com.lichenaut.worldgrowth.db.WGDatabaseManager;
+import com.lichenaut.worldgrowth.db.WGDBManager;
+import com.lichenaut.worldgrowth.db.WGMySQLManager;
+import com.lichenaut.worldgrowth.db.WGSQLiteManager;
 import com.lichenaut.worldgrowth.event.WGPointEvent;
 import com.lichenaut.worldgrowth.event.types.block.WGBlockBreak;
 import com.lichenaut.worldgrowth.runnable.WGRunnableManager;
@@ -41,7 +43,7 @@ public final class Main extends JavaPlugin {
     private Configuration configuration;
     private final PluginManager pluginManager = getServer().getPluginManager();
     private final Set<WGPointEvent<?>> pointEvents = new HashSet<>();
-    private WGDatabaseManager databaseManager;
+    private WGDBManager databaseManager;
     private WGRunnableManager boosterManager = new WGRunnableManager(this);
     private int boostMultiplier = 1;
 
@@ -59,6 +61,7 @@ public final class Main extends JavaPlugin {
 
     public void reloadWG() {
         HandlerList.unregisterAll(this);
+        pointEvents.clear();
 
         reloadConfig();
         configuration = getConfig();
@@ -87,53 +90,62 @@ public final class Main extends JavaPlugin {
         String url = configuration.getString("database-url");
         String username = configuration.getString("database-username");
         String password = configuration.getString("database-password");
+        String finalUrl;
         if (url != null && username != null && password != null) {
-            databaseManager = new WGDatabaseManager();
-            String finalUrl = "jdbc:mysql://" + url + "?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
-            CompletableFuture
-                    .runAsync(() -> {
-                        try {
-                            databaseManager.updateConnection(finalUrl, username, password);
-                        } catch (SQLException | ClassNotFoundException e) {
-                            throw new RuntimeException(e);
-                        }
-                    })
-                    .thenComposeAsync(connected -> CompletableFuture.runAsync(() -> {
-                        try {
-                            databaseManager.createStructure();
-                        } catch (SQLException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }))
-                    .thenComposeAsync(structured -> CompletableFuture.runAsync(() -> pointManager.addRunnable(new BukkitRunnable() {
-                        @Override
-                        public void run() {
-                            CompletableFuture<Void> future = CompletableFuture.completedFuture(null);
-                            for (WGPointEvent<?> pointEvent : pointEvents)
-                                future = future.thenComposeAsync(checked -> CompletableFuture.runAsync(pointEvent::checkCount));
-                            future.whenComplete((result, e) -> {
-                                if (e != null) {
-                                    logging.error("Error while trying to use database!");
-                                    logging.error(e);
-                                }
-                                pointManager.addRunnable(this, 1000L);
-                            });
-                        }
-                    }, 1000L)))
-                    .thenAcceptAsync(checking -> logging.info("Database connection up and running."))
-                    .exceptionallyAsync(e -> {
-                        logging.error("Error during database connecting and structuring!");
-                        logging.error(e);
-                        databaseManager = null;
-                        return null;
-                    });
+            logging.info("Database information given in config.yml. Using a remote database.");
+            if (databaseManager == null || databaseManager instanceof WGSQLiteManager) databaseManager = new WGMySQLManager();
+            finalUrl = "jdbc:mysql://" + url + "?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
         } else {
-            databaseManager = null;
-            logging.info("Database information not given. Storing information locally.");
+            logging.info("Database information not given in config.yml. Using a local database.");
+            try {
+                WGCopier.smallCopy(getResource("worldgrowth.db"), getDataFolder().getPath() + separator + "worldgrowth.db");
+            } catch (IOException e) {
+                logging.error("Error while creating local database file!");
+                logging.error(e);
+            }
+            if (databaseManager == null || databaseManager instanceof WGMySQLManager) databaseManager = new WGSQLiteManager();
+            finalUrl = "jdbc:sqlite:" + getDataFolder().getPath() + separator + "worldgrowth.db";
         }
+        CompletableFuture
+                .runAsync(() -> {
+                    try {
+                        databaseManager.updateConnection(finalUrl, username, password);
+                    } catch (SQLException | ClassNotFoundException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .thenComposeAsync(connected -> CompletableFuture.runAsync(() -> {
+                    try {
+                        databaseManager.createStructure();
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                }))
+                .thenComposeAsync(structured -> CompletableFuture.runAsync(() -> pointManager.addRunnable(new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        CompletableFuture<Void> future = CompletableFuture.completedFuture(null);
+                        for (WGPointEvent<?> pointEvent : pointEvents)
+                            future = future.thenComposeAsync(checked -> CompletableFuture.runAsync(pointEvent::checkCount));
+                        future.whenComplete((result, e) -> {
+                            if (e != null) {
+                                logging.error("Error while trying to use database!");
+                                logging.error(e);
+                            }
+                            pointManager.addRunnable(this, 1000L);
+                        });
+                    }
+                }, 1000L)))
+                .thenAcceptAsync(checking -> logging.info("Database connection up and running."))
+                .exceptionallyAsync(e -> {
+                    logging.error("Error during database connecting and structuring!");
+                    logging.error(e);
+                    databaseManager = null;
+                    return null;
+                });
 
         ConfigurationSection events = configuration.getConfigurationSection("events");
-        if (events != null) {
+        if (databaseManager != null && events != null) {
             for (String event : events.getKeys(false)) {
                 ConfigurationSection eventSection = events.getConfigurationSection(event);
                 if (eventSection == null) continue;

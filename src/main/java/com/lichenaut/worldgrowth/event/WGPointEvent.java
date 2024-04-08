@@ -1,6 +1,6 @@
 package com.lichenaut.worldgrowth.event;
 
-import com.lichenaut.worldgrowth.db.WGDatabaseManager;
+import com.lichenaut.worldgrowth.db.WGDBManager;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.Logger;
 import org.bukkit.event.Event;
@@ -14,7 +14,7 @@ import java.util.concurrent.CompletableFuture;
 public abstract class WGPointEvent<T extends Event> implements Listener {
 
     private final String simpleClassName = this.getClass().getSimpleName();
-    protected final WGDatabaseManager databaseManager;
+    protected final WGDBManager databaseManager;
     protected final Logger logging;
     protected final int quota;
     protected final int points;
@@ -31,7 +31,7 @@ public abstract class WGPointEvent<T extends Event> implements Listener {
                     }
                 })
                 .exceptionallyAsync(e -> {
-                    logging.error("Database error when incrementing event count of type {}", simpleClassName);
+                    logging.error("Database error when incrementing event count of type {}!", simpleClassName);
                     logging.error(e);
                     return null;
                 });
@@ -66,7 +66,7 @@ public abstract class WGPointEvent<T extends Event> implements Listener {
                     if (points != null) logging.info("Points updated to {}", points);
                 }))
                 .exceptionallyAsync(e -> {
-                    logging.error("Database error when converting events to points for event type {}", simpleClassName);
+                    logging.error("Database error when converting events to points for event type {}!", simpleClassName);
                     logging.error(e);
                     return null;
                 });
