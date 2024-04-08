@@ -248,7 +248,7 @@ events:
     points: 1
   entity-unleash:
   exp-bottle:
-    quota: 8
+    quota: 32
     points: 1
   explosion-prime:
   firework-explode:
@@ -269,7 +269,7 @@ events:
     quota: 32
     points: 1
   player-death:
-    quota: 4
+    quota: 8
     points: 1
   potion-splash:
     quota: 16
@@ -295,13 +295,13 @@ events:
   async-player-chat:
   async-player-chat-preview:
   player-advancement-done:
-    quota: 1
+    quota: 2
     points: 1
   player-animation:
   player-bed-enter:
   player-bed-leave:
-  player-bucket-entity:
   player-bucket:
+  player-bucket-entity:
   player-changed-main-hand:
   player-changed-world:
     quota: 32
@@ -325,8 +325,8 @@ events:
     quota: 128
     points: 1
   player-hide-entity:
-  player-interact-entity:
   player-interact:
+  player-interact-entity:
   player-item-break:
     quota: 4
     points: 1

@@ -20,7 +20,7 @@ public class WGMySQLManager implements WGDBManager {
         connection.createStatement().execute(
                 "CREATE TABLE IF NOT EXISTS `boosts` (`position` int NOT NULL AUTO_INCREMENT PRIMARY KEY, `multiplier` int NOT NULL, `delay` int NOT NULL)");
         connection.createStatement().execute(
-                "CREATE TABLE IF NOT EXISTS `events` (`type` varchar(40) NOT NULL PRIMARY KEY, `count` int NOT NULL)");
+                "CREATE TABLE IF NOT EXISTS `events` (`type` varchar(30) NOT NULL PRIMARY KEY, `count` int NOT NULL)");
         connection.createStatement().execute(
                 "CREATE TABLE IF NOT EXISTS `global` (`quota` int NOT NULL PRIMARY KEY, `points` int NOT NULL)");
     }
