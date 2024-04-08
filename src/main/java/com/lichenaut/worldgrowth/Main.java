@@ -6,7 +6,7 @@ import com.lichenaut.worldgrowth.db.WGDBManager;
 import com.lichenaut.worldgrowth.db.WGMySQLManager;
 import com.lichenaut.worldgrowth.db.WGSQLiteManager;
 import com.lichenaut.worldgrowth.event.WGPointEvent;
-import com.lichenaut.worldgrowth.event.types.block.WGBlockBreak;
+import com.lichenaut.worldgrowth.event.types.block.BlockBreak;
 import com.lichenaut.worldgrowth.runnable.WGRunnableManager;
 import com.lichenaut.worldgrowth.util.WGCopier;
 import com.lichenaut.worldgrowth.util.WGMessager;
@@ -14,6 +14,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import com.lichenaut.Metrics;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.event.HandlerList;
@@ -51,7 +52,7 @@ public final class Main extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        //Metrics metrics = new Metrics(plugin, pluginId);
+        Metrics metrics = new Metrics(plugin, 21539);
         getConfig().options().copyDefaults();
         saveDefaultConfig();
         reloadWG();
@@ -132,7 +133,7 @@ public final class Main extends JavaPlugin {
                                 logging.error("Error while trying to use database!");
                                 logging.error(e);
                             }
-                            pointManager.addRunnable(this, 1000L);
+                            pointManager.addRunnable(this, 6000L);
                         });
                     }
                 }, 1000L)))
@@ -151,7 +152,7 @@ public final class Main extends JavaPlugin {
                 if (eventSection == null) continue;
                 switch (event) {
                     case "block-break":
-                        WGBlockBreak blockBreak = new WGBlockBreak(databaseManager, logging, eventSection.getInt("quota"), eventSection.getInt("points"));
+                        BlockBreak blockBreak = new BlockBreak(databaseManager, logging, eventSection.getInt("quota"), eventSection.getInt("points"));
                         pluginManager.registerEvents(blockBreak, this);
                         pointEvents.add(blockBreak);
                         break;
@@ -162,7 +163,15 @@ public final class Main extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        /*databaseManager.closeConnection();
-        boosterManager.serializeQueue();*/
+        try {
+            if (databaseManager != null) {
+                databaseManager.closeConnection();
+                logging.info("Database connection closed.");
+            }
+        } catch (SQLException e) {
+            logging.error("Error while closing database connection!");
+            logging.error(e);
+        }
+        //boosterManager.serializeQueue();
     }
 }

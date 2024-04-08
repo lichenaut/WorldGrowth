@@ -118,6 +118,8 @@ events:
     points: 1
   block-ignite:
   block-multi-place:
+    quota: 256
+    points: 1
   block-physics:
   block-piston:
   block-place:
@@ -132,11 +134,14 @@ events:
     quota: 16
     points: 1
   brewing-stand-fuel:
+  brewing-start:
+  campfire-start:
   cauldron-level-change:
   fluid-level-change:
   furnace-burn:
   furnace-extract:
   furnace-smelt:
+  furnace-start-smelt:
   hopper-inventory-search:
   inventory-block-start:
   leaves-decay:
@@ -156,7 +161,9 @@ events:
   arrow-body-count-change:
     quota: 32
     points: 1
-  bat-toggle-sleep:
+  bat-toggle-sleep: #Note: I'm giving this event a quota out of pity for it lol
+    quota: 256
+    points: 1
   creeper-power:
     quota: 1
     points: 4
@@ -217,7 +224,7 @@ events:
   entity-remove:
   entity-resurrect:
     quota: 1
-    points: 2
+    points: 1
   entity-shoot-bow:
     quota: 128
     points: 1

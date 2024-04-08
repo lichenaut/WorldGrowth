@@ -7,9 +7,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockBreakEvent;
 
-public class WGBlockBreak extends WGPointEvent<BlockBreakEvent> {
+public class BlockBreak extends WGPointEvent<BlockBreakEvent> {
 
-    public WGBlockBreak(WGDBManager databaseManager, Logger logging, int quota, int points) {super(databaseManager, logging, quota, points);}
+    public BlockBreak(WGDBManager databaseManager, Logger logging, int quota, int points) {super(databaseManager, logging, quota, points);}
 
     @Override
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
