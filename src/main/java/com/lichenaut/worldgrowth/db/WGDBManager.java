@@ -1,12 +1,14 @@
 package com.lichenaut.worldgrowth.db;
 
+import com.lichenaut.worldgrowth.runnable.WGRunnableManager;
+
 import java.sql.SQLException;
 
-public interface WGDBManager {
+public interface WGDBManager { //Currently, all implementations have the exact same code.
 
-    void updateConnection(String url, String username, String password) throws SQLException, ClassNotFoundException;
+    void initializeDataSource(String url, String username, String password, int maxPoolSize);
 
-    void closeConnection() throws SQLException;
+    void closeDataSource();
 
     void createStructure() throws SQLException;
 
@@ -19,4 +21,8 @@ public interface WGDBManager {
     int getPoints() throws SQLException;
 
     void addPoints(int points) throws SQLException;
+
+    void serializeRunnableQueue(WGRunnableManager runnableManager) throws SQLException;
+
+    void deserializeRunnableQueue(WGRunnableManager runnableManager) throws SQLException;
 }

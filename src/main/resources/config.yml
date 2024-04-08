@@ -58,11 +58,11 @@ max-block-growth-per-hour: 96
 #Miscellaneous#
 ###############
 
-#WorldGrowth stores information like boosts, event counts, and growth quotas so that they are persistent across server restarts.
-  #WorldGrowth will store this information locally if a MySQL database is not provided.
+#WorldGrowth will store data in its plugin folder's SQLite database if a MySQL database is not provided.
 database-url: #"localhost:3306/example_db"
 database-username: #"root"
 database-password: #""
+database-max-pool-size: 32
 
 #If empty, WorldGrowth will affect all worlds.
 #To disable the plugin completely, scroll to the top of this file and set 'disable-plugin' to true.

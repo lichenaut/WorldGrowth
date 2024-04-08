@@ -1,79 +1,155 @@
 package com.lichenaut.worldgrowth.db;
 
+import com.lichenaut.worldgrowth.Main;
+import com.lichenaut.worldgrowth.runnable.WGBoost;
+import com.lichenaut.worldgrowth.runnable.WGRunnable;
+import com.lichenaut.worldgrowth.runnable.WGRunnableManager;
+import com.lichenaut.worldgrowth.util.WGMessager;
+import com.zaxxer.hikari.HikariDataSource;
+import lombok.RequiredArgsConstructor;
+
 import java.sql.*;
 
+@RequiredArgsConstructor
 public class WGMySQLManager implements WGDBManager {
 
-    private Connection connection;
+    private final Main plugin;
+    private final WGMessager messager;
+    private HikariDataSource dataSource;
 
-    public void updateConnection(String url, String username, String password) throws SQLException, ClassNotFoundException {
-        closeConnection();
-        Class.forName("com.mysql.cj.jdbc.Driver");
-        connection = DriverManager.getConnection(url, username, password);
+    @Override
+    public void initializeDataSource(String url, String username, String password, int maxPoolSize) {
+        dataSource = new HikariDataSource();
+        dataSource.setJdbcUrl(url);
+        dataSource.setUsername(username);
+        dataSource.setPassword(password);
+        dataSource.setMaximumPoolSize(maxPoolSize);
     }
 
-    public void closeConnection() throws SQLException {
-        if (connection != null && !connection.isClosed()) connection.close();
+    @Override
+    public void closeDataSource() {
+        if (dataSource != null) dataSource.close();
     }
 
+    @Override
     public void createStructure() throws SQLException {
-        connection.createStatement().execute(
-                "CREATE TABLE IF NOT EXISTS `boosts` (`position` int NOT NULL AUTO_INCREMENT PRIMARY KEY, `multiplier` int NOT NULL, `delay` int NOT NULL)");
-        connection.createStatement().execute(
-                "CREATE TABLE IF NOT EXISTS `events` (`type` varchar(30) NOT NULL PRIMARY KEY, `count` int NOT NULL)");
-        connection.createStatement().execute(
-                "CREATE TABLE IF NOT EXISTS `global` (`quota` int NOT NULL PRIMARY KEY, `points` int NOT NULL)");
+        try (Connection connection = dataSource.getConnection()) {
+            try (Statement statement = connection.createStatement()) {
+                statement.execute("CREATE TABLE IF NOT EXISTS `boosts` (`position` int NOT NULL AUTO_INCREMENT PRIMARY KEY, `multiplier` int NOT NULL, `delay` int NOT NULL)");
+                statement.execute("CREATE TABLE IF NOT EXISTS `events` (`type` varchar(30) NOT NULL PRIMARY KEY, `count` int NOT NULL)");
+                statement.execute("CREATE TABLE IF NOT EXISTS `global` (`quota` int NOT NULL PRIMARY KEY, `points` int NOT NULL)");
+            }
+        }
     }
 
+    @Override
     public int getEventCount(String type) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement(
-                "SELECT `count` FROM `events` WHERE `type` = ?")) {
-            statement.setString(1, type);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    return resultSet.getInt("count");
-                } else {
-                    return 0;
+        try (Connection connection = dataSource.getConnection()) {
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "SELECT `count` FROM `events` WHERE `type` = ?")) {
+                statement.setString(1, type);
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    if (resultSet.next()) {
+                        return resultSet.getInt("count");
+                    } else {
+                        return 0;
+                    }
                 }
             }
         }
     }
 
+    @Override
     public void setEventCount(String type, int count) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement(
-                "INSERT INTO `events` (`type`, `count`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `count` = ?")) {
-            statement.setString(1, type);
-            statement.setInt(2, count);
-            statement.setInt(3, count);
-            statement.executeUpdate();
-        }
-    }
-
-    public void incrementEventCount(String type) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement(
-                "INSERT INTO `events` (`type`, `count`) VALUES (?, 1) ON DUPLICATE KEY UPDATE `count` = `count` + 1")) {
-            statement.setString(1, type);
-            statement.executeUpdate();
-        }
-    }
-
-    public int getPoints() throws SQLException {
-        try (ResultSet resultSet = connection.createStatement().executeQuery(
-                "SELECT `points` FROM `global`")) {
-            if (resultSet.next()) {
-                return resultSet.getInt("points");
-            } else {
-                throw new RuntimeException();
+        try (Connection connection = dataSource.getConnection()) {
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "INSERT INTO `events` (`type`, `count`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `count` = ?")) {
+                statement.setString(1, type);
+                statement.setInt(2, count);
+                statement.setInt(3, count);
+                statement.executeUpdate();
             }
         }
     }
 
+    @Override
+    public void incrementEventCount(String type) throws SQLException {
+        try (Connection connection = dataSource.getConnection()) {
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "INSERT INTO `events` (`type`, `count`) VALUES (?, 1) ON DUPLICATE KEY UPDATE `count` = `count` + 1")) {
+                statement.setString(1, type);
+                statement.executeUpdate();
+            }
+        }
+    }
+
+    @Override
+    public int getPoints() throws SQLException {
+        try (Connection connection = dataSource.getConnection()) {
+            try (ResultSet resultSet = connection.createStatement().executeQuery(
+                    "SELECT `points` FROM `global`")) {
+                if (resultSet.next()) {
+                    return resultSet.getInt("points");
+                } else {
+                    throw new RuntimeException();
+                }
+            }
+        }
+    }
+
+    @Override
     public void addPoints(int points) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement(
-                "INSERT INTO `global` (`quota`, `points`) VALUES (0, ?) ON DUPLICATE KEY UPDATE `points` = `points` + ?")) {
-            statement.setInt(1, points);
-            statement.setInt(2, points);
-            statement.executeUpdate();
+        try (Connection connection = dataSource.getConnection()) {
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "INSERT INTO `global` (`quota`, `points`) VALUES (0, ?) ON DUPLICATE KEY UPDATE `points` = `points` + ?")) {
+                statement.setInt(1, points);
+                statement.setInt(2, points);
+                statement.executeUpdate();
+            }
+        }
+    }
+
+    @Override
+    public void serializeRunnableQueue(WGRunnableManager runnableManager) throws SQLException { //Currently specific to boost runnables.
+        try (Connection connection = dataSource.getConnection()) {
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "INSERT INTO `boosts` (`multiplier`, `delay`) VALUES (?, ?)")) {
+                for (WGRunnable runnable : runnableManager.getRunnableQueue()) {
+                    Object multiplier = runnable.getMultiplier();
+                    if (multiplier == null) continue;
+
+                    statement.setInt(1, (Integer) multiplier);
+                    statement.setLong(2, runnable.delay());
+                    statement.addBatch();
+                }
+                statement.executeBatch();
+            }
+        }
+    }
+
+    @Override
+    public void deserializeRunnableQueue(WGRunnableManager runnableManager) throws SQLException { //Currently specific to boost runnables.
+        try (Connection connection = dataSource.getConnection()) {
+            try (ResultSet resultSet = connection.createStatement().executeQuery(
+                    "SELECT `multiplier`, `delay` FROM `boosts`")) {
+                while (resultSet.next()) {
+                    int multiplier = resultSet.getInt("multiplier");
+                    long delay = resultSet.getLong("delay");
+                    runnableManager.addRunnable(new WGBoost(plugin, messager, multiplier) {
+                        @Override
+                        public void run() {
+                            runBoost(multiplier, delay);
+                        }
+                    }, 0L);
+                    runnableManager.addRunnable(new WGBoost(plugin, messager, 1) {
+                        @Override
+                        public void run() {
+                            plugin.setBoostMultiplier(1);
+                            messager.spreadMsg(plugin.getConfiguration().getBoolean("broadcast-boosts"), messager.getDeboostedGains());
+                        }
+                    }, delay);
+                }
+            }
         }
     }
 }

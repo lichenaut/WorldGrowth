@@ -1,12 +1,14 @@
 package com.lichenaut.worldgrowth.runnable;
 
 import com.lichenaut.worldgrowth.Main;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.LinkedList;
 
+@Getter
 @RequiredArgsConstructor
 public class WGRunnableManager {
 
@@ -32,6 +34,4 @@ public class WGRunnableManager {
             }
         }, runnable.delay());
     }
-
-    //public void serializeQueue() {}
 }

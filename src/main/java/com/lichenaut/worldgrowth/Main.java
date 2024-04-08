@@ -6,7 +6,7 @@ import com.lichenaut.worldgrowth.db.WGDBManager;
 import com.lichenaut.worldgrowth.db.WGMySQLManager;
 import com.lichenaut.worldgrowth.db.WGSQLiteManager;
 import com.lichenaut.worldgrowth.event.WGPointEvent;
-import com.lichenaut.worldgrowth.event.types.block.BlockBreak;
+import com.lichenaut.worldgrowth.event.block.BlockBreak;
 import com.lichenaut.worldgrowth.runnable.WGRunnableManager;
 import com.lichenaut.worldgrowth.util.WGCopier;
 import com.lichenaut.worldgrowth.util.WGMessager;
@@ -41,21 +41,30 @@ public final class Main extends JavaPlugin {
     private final Logger logging = LogManager.getLogger("WorldGrowth");
     private final WGMessager messager = new WGMessager(this);
     private final String separator = FileSystems.getDefault().getSeparator();
-    private Configuration configuration;
     private final PluginManager pluginManager = getServer().getPluginManager();
     private final Set<WGPointEvent<?>> pointEvents = new HashSet<>();
-    private WGDBManager databaseManager;
-    private WGRunnableManager boosterManager = new WGRunnableManager(this);
-    private int boostMultiplier = 1;
-
     WGRunnableManager pointManager = new WGRunnableManager(this);
+    private WGRunnableManager boostManager = new WGRunnableManager(this);
+    private int boostMultiplier = 1;
+    private Configuration configuration;
+    private WGDBManager databaseManager;
 
     @Override
     public void onEnable() {
         Metrics metrics = new Metrics(plugin, 21539);
+
         getConfig().options().copyDefaults();
         saveDefaultConfig();
+
         reloadWG();
+
+        try {
+            databaseManager.deserializeRunnableQueue(boostManager);
+        } catch (SQLException e) {
+            logging.error("Error while deserializing boost queue!");
+            throw new RuntimeException(e);
+        }
+
         Objects.requireNonNull(getCommand("wg")).setExecutor(new WGCommand(this, messager));
         Objects.requireNonNull(getCommand("wg")).setTabCompleter(new WGTabCompleter());
     }
@@ -91,10 +100,11 @@ public final class Main extends JavaPlugin {
         String url = configuration.getString("database-url");
         String username = configuration.getString("database-username");
         String password = configuration.getString("database-password");
+        int maxPoolSize = configuration.getInt("database-max-pool-size");
         String finalUrl;
         if (url != null && username != null && password != null) {
             logging.info("Database information given in config.yml. Using a remote database.");
-            if (databaseManager == null || databaseManager instanceof WGSQLiteManager) databaseManager = new WGMySQLManager();
+            if (databaseManager == null || databaseManager instanceof WGSQLiteManager) databaseManager = new WGMySQLManager(this, messager);
             finalUrl = "jdbc:mysql://" + url + "?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
         } else {
             logging.info("Database information not given in config.yml. Using a local database.");
@@ -102,19 +112,13 @@ public final class Main extends JavaPlugin {
                 WGCopier.smallCopy(getResource("worldgrowth.db"), getDataFolder().getPath() + separator + "worldgrowth.db");
             } catch (IOException e) {
                 logging.error("Error while creating local database file!");
-                logging.error(e);
+                throw new RuntimeException(e);
             }
-            if (databaseManager == null || databaseManager instanceof WGMySQLManager) databaseManager = new WGSQLiteManager();
+            if (databaseManager == null || databaseManager instanceof WGMySQLManager) databaseManager = new WGSQLiteManager(this, messager);
             finalUrl = "jdbc:sqlite:" + getDataFolder().getPath() + separator + "worldgrowth.db";
         }
         CompletableFuture
-                .runAsync(() -> {
-                    try {
-                        databaseManager.updateConnection(finalUrl, username, password);
-                    } catch (SQLException | ClassNotFoundException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
+                .runAsync(() -> databaseManager.initializeDataSource(finalUrl, username, password, maxPoolSize))
                 .thenComposeAsync(connected -> CompletableFuture.runAsync(() -> {
                     try {
                         databaseManager.createStructure();
@@ -140,9 +144,7 @@ public final class Main extends JavaPlugin {
                 .thenAcceptAsync(checking -> logging.info("Database connection up and running."))
                 .exceptionallyAsync(e -> {
                     logging.error("Error during database connecting and structuring!");
-                    logging.error(e);
-                    databaseManager = null;
-                    return null;
+                    throw new RuntimeException(e);
                 });
 
         ConfigurationSection events = configuration.getConfigurationSection("events");
@@ -150,9 +152,12 @@ public final class Main extends JavaPlugin {
             for (String event : events.getKeys(false)) {
                 ConfigurationSection eventSection = events.getConfigurationSection(event);
                 if (eventSection == null) continue;
+
+                int quota = eventSection.getInt("quota");
+                int points = eventSection.getInt("points");
                 switch (event) {
                     case "block-break":
-                        BlockBreak blockBreak = new BlockBreak(databaseManager, logging, eventSection.getInt("quota"), eventSection.getInt("points"));
+                        BlockBreak blockBreak = new BlockBreak(databaseManager, logging, quota, points);
                         pluginManager.registerEvents(blockBreak, this);
                         pointEvents.add(blockBreak);
                         break;
@@ -163,15 +168,15 @@ public final class Main extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (databaseManager == null) return;
+
         try {
-            if (databaseManager != null) {
-                databaseManager.closeConnection();
-                logging.info("Database connection closed.");
-            }
+            databaseManager.serializeRunnableQueue(boostManager);
         } catch (SQLException e) {
-            logging.error("Error while closing database connection!");
-            logging.error(e);
+            logging.error("Error while serializing boost queue!");
+            throw new RuntimeException(e);
+        } finally {
+            databaseManager.closeDataSource();
         }
-        //boosterManager.serializeQueue();
     }
 }

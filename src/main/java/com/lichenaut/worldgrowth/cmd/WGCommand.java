@@ -1,6 +1,7 @@
 package com.lichenaut.worldgrowth.cmd;
 
 import com.lichenaut.worldgrowth.Main;
+import com.lichenaut.worldgrowth.runnable.WGBoost;
 import com.lichenaut.worldgrowth.runnable.WGRunnableManager;
 import com.lichenaut.worldgrowth.util.WGMessager;
 import lombok.RequiredArgsConstructor;
@@ -8,7 +9,6 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import javax.annotation.Nonnull;
 
@@ -55,23 +55,19 @@ public class WGCommand implements CommandExecutor {
                     return true;
                 }
 
+                int multiplierInt = Integer.parseInt(multiplier);
                 long delay = Integer.parseInt(strings[2]);
-                WGRunnableManager boosterManager = plugin.getBoosterManager();
-                boosterManager.addRunnable(new BukkitRunnable() {
+                WGRunnableManager boosterManager = plugin.getBoostManager();
+                boosterManager.addRunnable(new WGBoost(plugin, messager, multiplierInt) {
                     @Override
                     public void run() {
-                        plugin.setBoostMultiplier(Integer.parseInt(multiplier));
-                        messager.spreadMsg(plugin.getConfiguration().getBoolean("broadcast-boosts"), messager.concatArrays(
-                                messager.combineMessage(messager.getBoostedGains1(), multiplier),
-                                messager.combineMessage(messager.getBoostedGains2(), String.format("%.2f", (double) delay / 1200)),
-                                messager.getBoostedGains3()));
+                        runBoost(multiplierInt, delay);
                     }
                 }, 0L);
-                boosterManager.addRunnable(new BukkitRunnable() {
+                boosterManager.addRunnable(new WGBoost(plugin, messager, 1) {
                     @Override
                     public void run() {
-                        plugin.setBoostMultiplier(1);
-                        messager.spreadMsg(plugin.getConfiguration().getBoolean("broadcast-boosts"), messager.getDeboostedGains());
+                        runReset();
                     }
                 }, delay);
                 return true;
