@@ -47,7 +47,7 @@ increment-growth-quota-by: 8
 #The maximum amount of points required to trigger a growth.
 max-growth-quota: 1024
 
-#The amount of blocks the diameter of the world border will grow per growth. Don't forget about 'growth-multiplier's!
+#The amount of blocks the diameter of the world border will increase by per growth. Don't forget about 'growth-multiplier's!
 growth-size: 4
 
 #The maximum amount of blocks the world border can grow per hour.

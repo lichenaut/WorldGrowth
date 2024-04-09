@@ -13,9 +13,11 @@ public abstract class WGBoost extends BukkitRunnable {
     private final Main plugin;
     private final WGMessager messager;
     private final int multiplier;
+    private long timeStarted;
 
     public void runBoost(int multiplier, long delay) {
         plugin.setBoostMultiplier(multiplier);
+        timeStarted = System.currentTimeMillis();
         messager.spreadMsg(
                 plugin.getConfiguration().getBoolean("broadcast-boosts"),
                 messager.concatArrays(

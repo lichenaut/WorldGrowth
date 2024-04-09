@@ -59,7 +59,7 @@ public final class Main extends JavaPlugin {
         reloadWG();
 
         try {
-            databaseManager.deserializeRunnableQueue(boostManager);
+            databaseManager.deserializeRunnableQueue(boostManager, "SELECT `multiplier`, `delay` FROM `boosts`", "boosts");
         } catch (SQLException e) {
             logging.error("Error while deserializing boost queue!");
             throw new RuntimeException(e);
@@ -154,6 +154,8 @@ public final class Main extends JavaPlugin {
                 if (eventSection == null) continue;
 
                 int quota = eventSection.getInt("quota");
+                if (quota < 1) continue;
+
                 int points = eventSection.getInt("points");
                 switch (event) {
                     case "block-break":
@@ -171,7 +173,7 @@ public final class Main extends JavaPlugin {
         if (databaseManager == null) return;
 
         try {
-            databaseManager.serializeRunnableQueue(boostManager);
+            databaseManager.serializeRunnableQueue(boostManager, "INSERT INTO `boosts` (`multiplier`, `delay`) VALUES (?, ?)");
         } catch (SQLException e) {
             logging.error("Error while serializing boost queue!");
             throw new RuntimeException(e);

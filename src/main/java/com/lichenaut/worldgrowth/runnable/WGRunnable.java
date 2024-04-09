@@ -13,4 +13,10 @@ public record WGRunnable(BukkitRunnable runnable, long delay) {
 
         return null;
     }
+
+    public Object getTimeStarted() {
+        if (runnable instanceof WGBoost) return ((WGBoost) runnable).getTimeStarted();
+
+        return null;
+    }
 }

@@ -22,7 +22,7 @@ public class WGRunnableManager {
     }
 
     private void scheduleNextRunnable() {
-        WGRunnable runnable = runnableQueue.poll();
+        WGRunnable runnable = runnableQueue.peek();
         if (runnable == null) return;
 
         currentTask = plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
@@ -30,6 +30,7 @@ public class WGRunnableManager {
                 runnable.run();
             } finally {
                 currentTask = null;
+                runnableQueue.pop();
                 scheduleNextRunnable();
             }
         }, runnable.delay());

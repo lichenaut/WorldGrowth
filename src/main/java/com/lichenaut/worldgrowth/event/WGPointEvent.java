@@ -47,7 +47,7 @@ public abstract class WGPointEvent<T extends Event> implements Listener {
                     }
                 })
                 .thenComposeAsync(count -> CompletableFuture.supplyAsync(() -> {
-                    if (quota < 1 || count < quota) return null;
+                    if (count < quota) return null;
 
                     try {
                         databaseManager.setEventCount(simpleClassName, count % quota);

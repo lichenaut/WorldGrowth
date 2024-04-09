@@ -22,7 +22,7 @@ public interface WGDBManager { //Currently, all implementations have the exact s
 
     void addPoints(int points) throws SQLException;
 
-    void serializeRunnableQueue(WGRunnableManager runnableManager) throws SQLException;
+    void serializeRunnableQueue(WGRunnableManager runnableManager, String statementString) throws SQLException;
 
-    void deserializeRunnableQueue(WGRunnableManager runnableManager) throws SQLException;
+    void deserializeRunnableQueue(WGRunnableManager runnableManager, String statementString, String tableName) throws SQLException;
 }

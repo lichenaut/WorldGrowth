@@ -1,15 +1,22 @@
 package com.lichenaut.worldgrowth.db;
 
 import com.lichenaut.worldgrowth.Main;
+import com.lichenaut.worldgrowth.runnable.WGBoost;
+import com.lichenaut.worldgrowth.runnable.WGRunnable;
+import com.lichenaut.worldgrowth.runnable.WGRunnableManager;
+import com.lichenaut.worldgrowth.util.WGMessager;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.RequiredArgsConstructor;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.sql.*;
+import java.util.LinkedList;
 
 @RequiredArgsConstructor
 public class WGSQLiteManager implements WGDBManager {
 
     private final Main plugin;
+    private final WGMessager messager;
     private HikariDataSource dataSource;
 
     @Override
@@ -105,12 +112,62 @@ public class WGSQLiteManager implements WGDBManager {
     }
 
     @Override
-    public void serializeRunnableQueue() {
+    public void serializeRunnableQueue(WGRunnableManager runnableManager, String statementString) throws SQLException {
+        try (Connection connection = dataSource.getConnection()) {
+            try (PreparedStatement statement = connection.prepareStatement(
+                    statementString)) {
+                LinkedList<WGRunnable> runnableQueue = runnableManager.getRunnableQueue();
+                if (runnableQueue.isEmpty()) return;
 
+                BukkitRunnable firstRunnable = runnableQueue.get(0).runnable();
+                if (firstRunnable instanceof WGBoost) {
+                    for (int i = 0; i < runnableQueue.size(); i++) {
+                        WGRunnable runnable = runnableQueue.get(i);
+                        Object multiplier = runnable.getMultiplier();
+                        assert multiplier != null;
+                        statement.setInt(1, (Integer) multiplier);
+
+                        long delay = runnable.delay();
+                        if (i == 0) { //Shorten the duration of the current boost.
+                            Object timeStarted = runnable.getTimeStarted();
+                            assert timeStarted != null;
+                            delay -= (System.currentTimeMillis() - (Long) runnable.getTimeStarted());
+                        }
+                        statement.setLong(2, delay);
+
+                        statement.addBatch();
+                    }
+                } //Add checks for other types of runnables here.
+
+                statement.executeBatch();
+            }
+        }
     }
 
     @Override
-    public void deserializeRunnableQueue() {
-
+    public void deserializeRunnableQueue(WGRunnableManager runnableManager, String statementString, String tableName) throws SQLException {
+        try (Connection connection = dataSource.getConnection()) {
+            try (ResultSet resultSet = connection.createStatement().executeQuery(
+                    statementString)) {
+                if (tableName.equals("boosts")) {
+                    while (resultSet.next()) {
+                        int multiplier = resultSet.getInt("multiplier");
+                        long delay = resultSet.getLong("delay");
+                        runnableManager.addRunnable(new WGBoost(plugin, messager, multiplier) {
+                            @Override
+                            public void run() {
+                                runBoost(multiplier, delay);
+                            }
+                        }, 0L);
+                        runnableManager.addRunnable(new WGBoost(plugin, messager, 1) {
+                            @Override
+                            public void run() {
+                                runReset();
+                            }
+                        }, delay);
+                    } //Add checks for other types of runnables here. Convert if to switch-case statement if there are more than 2 cases.
+                }
+            }
+        }
     }
 }
