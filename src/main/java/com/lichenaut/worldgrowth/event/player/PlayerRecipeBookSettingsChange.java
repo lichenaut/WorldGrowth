@@ -1,5 +1,6 @@
 package com.lichenaut.worldgrowth.event.player;
 
+import com.lichenaut.worldgrowth.Main;
 import com.lichenaut.worldgrowth.db.WGDBManager;
 import com.lichenaut.worldgrowth.event.WGPointEvent;
 import org.apache.logging.log4j.Logger;
@@ -9,9 +10,9 @@ import org.bukkit.event.player.PlayerRecipeBookSettingsChangeEvent;
 
 public class PlayerRecipeBookSettingsChange extends WGPointEvent<PlayerRecipeBookSettingsChangeEvent> {
 
-    public PlayerRecipeBookSettingsChange(WGDBManager databaseManager, Logger logging, int quota, int points) { super(databaseManager, logging, quota, points); }
+    public PlayerRecipeBookSettingsChange(Main main, WGDBManager databaseManager, Logger logging, int quota, int points) { super(main, databaseManager, logging, quota, points); }
 
     @Override
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-    protected void onEvent(PlayerRecipeBookSettingsChangeEvent event) { incrementCount(); }
+    protected void onEvent(PlayerRecipeBookSettingsChangeEvent event) { count++; }
 }

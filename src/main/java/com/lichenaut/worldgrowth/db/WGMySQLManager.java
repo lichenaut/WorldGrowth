@@ -1,9 +1,9 @@
 package com.lichenaut.worldgrowth.db;
 
 import com.lichenaut.worldgrowth.Main;
+import com.lichenaut.worldgrowth.runnable.WGBoost;
 import com.lichenaut.worldgrowth.runnable.WGRunnable;
 import com.lichenaut.worldgrowth.runnable.WGRunnableManager;
-import com.lichenaut.worldgrowth.runnable.WGBoost;
 import com.lichenaut.worldgrowth.util.WGMessager;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.RequiredArgsConstructor;
@@ -22,10 +22,21 @@ public class WGMySQLManager implements WGDBManager {
     @Override
     public void initializeDataSource(String url, String username, String password, int maxPoolSize) {
         dataSource = new HikariDataSource();
+        dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
         dataSource.setJdbcUrl(url);
         dataSource.setUsername(username);
         dataSource.setPassword(password);
         dataSource.setMaximumPoolSize(maxPoolSize);
+        dataSource.addDataSourceProperty("cachePrepStmts", "true");
+        dataSource.addDataSourceProperty("prepStmtCacheSize", "256");
+        dataSource.addDataSourceProperty("prepStmtCacheSqlLimit", "1024");
+        dataSource.addDataSourceProperty("useServerPrepStmts", "true");
+        dataSource.addDataSourceProperty("useLocalSessionState", "true");
+        dataSource.addDataSourceProperty("rewriteBatchedStatements", "true");
+        dataSource.addDataSourceProperty("cacheResultSetMetadata", "true");
+        dataSource.addDataSourceProperty("cacheServerConfiguration", "true");
+        dataSource.addDataSourceProperty("elideSetAutoCommits", "true");
+        dataSource.addDataSourceProperty("maintainTimeStats", "false");
     }
 
     @Override

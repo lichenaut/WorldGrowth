@@ -1,5 +1,6 @@
 package com.lichenaut.worldgrowth.event.entity;
 
+import com.lichenaut.worldgrowth.Main;
 import com.lichenaut.worldgrowth.db.WGDBManager;
 import com.lichenaut.worldgrowth.event.WGPointEvent;
 import org.apache.logging.log4j.Logger;
@@ -9,9 +10,9 @@ import org.bukkit.event.entity.EntityDamageByBlockEvent;
 
 public class EntityDamageByBlock extends WGPointEvent<EntityDamageByBlockEvent> {
 
-    public EntityDamageByBlock(WGDBManager databaseManager, Logger logging, int quota, int points) { super(databaseManager, logging, quota, points); }
+    public EntityDamageByBlock(Main plugin, WGDBManager databaseManager, Logger logging, int quota, int points) { super(plugin, databaseManager, logging, quota, points); }
 
     @Override
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-    protected void onEvent(EntityDamageByBlockEvent event) { incrementCount(); }
+    protected void onEvent(EntityDamageByBlockEvent event) { count++; }
 }

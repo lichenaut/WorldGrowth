@@ -1,6 +1,5 @@
 package com.lichenaut.worldgrowth;
 
-import com.lichenaut.Metrics;
 import com.lichenaut.worldgrowth.cmd.WGCommand;
 import com.lichenaut.worldgrowth.cmd.WGTabCompleter;
 import com.lichenaut.worldgrowth.db.WGDBManager;
@@ -8,8 +7,7 @@ import com.lichenaut.worldgrowth.db.WGMySQLManager;
 import com.lichenaut.worldgrowth.db.WGSQLiteManager;
 import com.lichenaut.worldgrowth.event.WGPointEvent;
 import com.lichenaut.worldgrowth.event.block.BellResonate;
-import com.lichenaut.worldgrowth.event.block.BellRing;
-import com.lichenaut.worldgrowth.event.block.BlockBreak;
+import com.lichenaut.worldgrowth.runnable.WGEventChecker;
 import com.lichenaut.worldgrowth.runnable.WGRunnableManager;
 import com.lichenaut.worldgrowth.util.WGCopier;
 import com.lichenaut.worldgrowth.util.WGMessager;
@@ -17,12 +15,12 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bstats.bukkit.MetricsLite;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -45,28 +43,19 @@ public final class Main extends JavaPlugin {
     private final String separator = FileSystems.getDefault().getSeparator();
     private final PluginManager pluginManager = getServer().getPluginManager();
     private final Set<WGPointEvent<?>> pointEvents = new HashSet<>();
+    private int points = 0;
     WGRunnableManager pointManager = new WGRunnableManager(this);
-    private WGRunnableManager boostManager = new WGRunnableManager(this);
     private int boostMultiplier = 1;
+    private WGRunnableManager boostManager = new WGRunnableManager(this);
     private Configuration configuration;
     private WGDBManager databaseManager;
 
     @Override
     public void onEnable() {
-        Metrics metrics = new Metrics(plugin, 21539);
-
+        new MetricsLite(plugin, 21539);
         getConfig().options().copyDefaults();
         saveDefaultConfig();
-
         reloadWG();
-
-        try {
-            databaseManager.deserializeRunnableQueue(boostManager, "SELECT `multiplier`, `delay` FROM `boosts`", "boosts");
-        } catch (SQLException e) {
-            logging.error("Error while deserializing boost queue!");
-            throw new RuntimeException(e);
-        }
-
         Objects.requireNonNull(getCommand("wg")).setExecutor(new WGCommand(this, messager));
         Objects.requireNonNull(getCommand("wg")).setTabCompleter(new WGTabCompleter());
     }
@@ -107,7 +96,7 @@ public final class Main extends JavaPlugin {
         if (url != null && username != null && password != null) {
             logging.info("Database information given in config.yml. Using a remote database.");
             if (databaseManager == null || databaseManager instanceof WGSQLiteManager) databaseManager = new WGMySQLManager(this, messager);
-            finalUrl = "jdbc:mysql://" + url + "?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
+            finalUrl = "jdbc:mysql://" + url;
         } else {
             logging.info("Database information not given in config.yml. Using a local database.");
             try {
@@ -128,25 +117,20 @@ public final class Main extends JavaPlugin {
                         throw new RuntimeException(e);
                     }
                 }))
-                .thenComposeAsync(structured -> CompletableFuture.runAsync(() -> pointManager.addRunnable(new BukkitRunnable() {
-                    @Override
-                    public void run() {
-                        CompletableFuture<Void> future = CompletableFuture.completedFuture(null);
-                        for (WGPointEvent<?> pointEvent : pointEvents)
-                            future = future.thenComposeAsync(checked -> CompletableFuture.runAsync(pointEvent::checkCount));
-                        future.whenComplete((result, e) -> {
-                            if (e != null) {
-                                logging.error("Error while trying to use database!");
-                                logging.error(e);
-                            }
-                            pointManager.addRunnable(this, 6000L);
-                        });
+                .thenComposeAsync(structured -> CompletableFuture.runAsync(() ->
+                        pointManager.addRunnable(new WGEventChecker(this, logging, pointEvents, pointManager), 1000L)))
+                .thenComposeAsync(queued -> CompletableFuture.runAsync(() -> {
+                    try {
+                        databaseManager.deserializeRunnableQueue(boostManager, "SELECT `multiplier`, `delay` FROM `boosts`", "boosts");
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
                     }
-                }, 1000L)))
-                .thenAcceptAsync(checking -> logging.info("Database connection up and running."))
+                }))
+                .thenAcceptAsync(deserialized -> logging.info("Database connection up and running."))
                 .exceptionallyAsync(e -> {
-                    logging.error("Error during database connecting and structuring!");
-                    throw new RuntimeException(e);
+                    logging.error("Error during the database connecting, structuring, queueing, and deserializing process!");
+                    logging.error(e);
+                    return null;
                 });
 
         ConfigurationSection events = configuration.getConfigurationSection("events");
@@ -158,23 +142,23 @@ public final class Main extends JavaPlugin {
                 int quota = eventSection.getInt("quota");
                 if (quota < 1) continue;
 
-                int points = eventSection.getInt("points");
+                int pointValue = eventSection.getInt("points");
                 switch (event) {
                     case "bell-resonate":
-                        BellResonate bellResonate = new BellResonate(databaseManager, logging, quota, points);
+                        BellResonate bellResonate = new BellResonate(quota, pointValue);
                         pluginManager.registerEvents(bellResonate, this);
                         pointEvents.add(bellResonate);
                         break;
-                    case "bell-ring":
-                        BellRing bellRing = new BellRing(databaseManager, logging, quota, points);
+                    /*case "bell-ring":
+                        BellRing bellRing = new BellRing(quota, pointValue);
                         pluginManager.registerEvents(bellRing, this);
                         pointEvents.add(bellRing);
                         break;
                     case "block-break":
-                        BlockBreak blockBreak = new BlockBreak(databaseManager, logging, quota, points);
+                        BlockBreak blockBreak = new BlockBreak(quota, pointValue);
                         pluginManager.registerEvents(blockBreak, this);
                         pointEvents.add(blockBreak);
-                        break;
+                        break;*/
                     //make event listener registerer class
                 }
             }
@@ -194,4 +178,6 @@ public final class Main extends JavaPlugin {
             databaseManager.closeDataSource();
         }
     }
+
+    public void addPoints(int pointsToAdd) { points += pointsToAdd; }
 }

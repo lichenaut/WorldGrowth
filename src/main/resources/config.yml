@@ -63,7 +63,8 @@ max-block-growth-per-hour: 96
 database-url: #"localhost:3306/example_db"
 database-username: #"root"
 database-password: #""
-database-max-pool-size: 32
+  #Optimal size formula: (cpu_core_count * 2) + effective_spindle_count, assuming this is the only HikariCP-using plugin on the server.
+database-max-pool-size: 16
 
 #If empty, WorldGrowth will affect all worlds.
 #To disable the plugin completely, scroll to the top of this file and set 'disable-plugin' to true.

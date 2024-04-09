@@ -22,7 +22,7 @@ public class WGSQLiteManager implements WGDBManager {
     @Override
     public void initializeDataSource(String url, String username, String password, int maxPoolSize) {
         dataSource = new HikariDataSource();
-        dataSource.setJdbcUrl(url);
+        dataSource.setDataSourceClassName("org.sqlite.SQLiteDataSource");
         dataSource.setUsername(username);
         dataSource.setPassword(password);
         dataSource.setMaximumPoolSize(maxPoolSize);
@@ -37,9 +37,9 @@ public class WGSQLiteManager implements WGDBManager {
     public void createStructure() throws SQLException {
         try (Connection connection = dataSource.getConnection()) {
             try (Statement statement = connection.createStatement()) {
-                statement.execute("CREATE TABLE IF NOT EXISTS `boosts` (`position` int NOT NULL AUTO_INCREMENT PRIMARY KEY, `multiplier` int NOT NULL, `delay` int NOT NULL)");
-                statement.execute("CREATE TABLE IF NOT EXISTS `events` (`type` varchar(30) NOT NULL PRIMARY KEY, `count` int NOT NULL)");
-                statement.execute("CREATE TABLE IF NOT EXISTS `global` (`quota` int NOT NULL PRIMARY KEY, `points` int NOT NULL)");
+                statement.execute("CREATE TABLE IF NOT EXISTS boosts (position INTEGER PRIMARY KEY AUTOINCREMENT, multiplier INTEGER NOT NULL, delay INTEGER NOT NULL);");
+                statement.execute("CREATE TABLE IF NOT EXISTS events (type VARCHAR(30) PRIMARY KEY NOT NULL, count INTEGER NOT NULL);");
+                statement.execute("CREATE TABLE IF NOT EXISTS global (quota INTEGER PRIMARY KEY NOT NULL, points INTEGER NOT NULL);");
             }
         }
     }
@@ -65,7 +65,7 @@ public class WGSQLiteManager implements WGDBManager {
     public void setEventCount(String type, int count) throws SQLException {
         try (Connection connection = dataSource.getConnection()) {
             try (PreparedStatement statement = connection.prepareStatement(
-                    "INSERT INTO `events` (`type`, `count`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `count` = ?")) {
+                    "INSERT OR REPLACE INTO events (type, count) VALUES (?, ?)")) {
                 statement.setString(1, type);
                 statement.setInt(2, count);
                 statement.setInt(3, count);
@@ -78,7 +78,7 @@ public class WGSQLiteManager implements WGDBManager {
     public void incrementEventCount(String type) throws SQLException {
         try (Connection connection = dataSource.getConnection()) {
             try (PreparedStatement statement = connection.prepareStatement(
-                    "INSERT INTO `events` (`type`, `count`) VALUES (?, 1) ON DUPLICATE KEY UPDATE `count` = `count` + 1")) {
+                    "INSERT INTO events (type, count) VALUES (?, 1) ON CONFLICT(type) DO UPDATE SET count = count + 1")) {
                 statement.setString(1, type);
                 statement.executeUpdate();
             }
@@ -103,7 +103,7 @@ public class WGSQLiteManager implements WGDBManager {
     public void addPoints(int points) throws SQLException {
         try (Connection connection = dataSource.getConnection()) {
             try (PreparedStatement statement = connection.prepareStatement(
-                    "INSERT INTO `global` (`quota`, `points`) VALUES (0, ?) ON DUPLICATE KEY UPDATE `points` = `points` + ?")) {
+                    "INSERT INTO global (quota, points) VALUES (0, ?) ON CONFLICT(quota) DO UPDATE SET points = points + ?")) {
                 statement.setInt(1, points);
                 statement.setInt(2, points);
                 statement.executeUpdate();

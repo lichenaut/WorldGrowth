@@ -1,5 +1,6 @@
 package com.lichenaut.worldgrowth.event.player;
 
+import com.lichenaut.worldgrowth.Main;
 import com.lichenaut.worldgrowth.db.WGDBManager;
 import com.lichenaut.worldgrowth.event.WGPointEvent;
 import org.apache.logging.log4j.Logger;
@@ -9,9 +10,9 @@ import org.bukkit.event.player.PlayerChannelEvent;
 
 public class PlayerChannel extends WGPointEvent<PlayerChannelEvent> {
 
-    public PlayerChannel(WGDBManager databaseManager, Logger logging, int quota, int points) { super(databaseManager, logging, quota, points); }
+    public PlayerChannel(Main main, WGDBManager databaseManager, Logger logging, int quota, int points) { super(main, databaseManager, logging, quota, points); }
 
     @Override
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-    protected void onEvent(PlayerChannelEvent event) { incrementCount(); }
+    protected void onEvent(PlayerChannelEvent event) { count++; }
 }

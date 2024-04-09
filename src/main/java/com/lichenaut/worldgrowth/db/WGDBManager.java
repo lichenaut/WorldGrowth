@@ -4,7 +4,7 @@ import com.lichenaut.worldgrowth.runnable.WGRunnableManager;
 
 import java.sql.SQLException;
 
-public interface WGDBManager { //Currently, all implementations have the exact same code.
+public interface WGDBManager {
 
     void initializeDataSource(String url, String username, String password, int maxPoolSize);
 

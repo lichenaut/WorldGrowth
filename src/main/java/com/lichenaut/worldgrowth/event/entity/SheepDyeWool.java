@@ -1,5 +1,6 @@
 package com.lichenaut.worldgrowth.event.entity;
 
+import com.lichenaut.worldgrowth.Main;
 import com.lichenaut.worldgrowth.db.WGDBManager;
 import com.lichenaut.worldgrowth.event.WGPointEvent;
 import org.apache.logging.log4j.Logger;
@@ -9,9 +10,9 @@ import org.bukkit.event.entity.SheepDyeWoolEvent;
 
 public class SheepDyeWool extends WGPointEvent<SheepDyeWoolEvent> {
 
-    public SheepDyeWool(WGDBManager databaseManager, Logger logging, int quota, int points) { super(databaseManager, logging, quota, points); }
+    public SheepDyeWool(Main main, WGDBManager databaseManager, Logger logging, int quota, int points) { super(main, databaseManager, logging, quota, points); }
 
     @Override
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-    protected void onEvent(SheepDyeWoolEvent event) { incrementCount(); }
+    protected void onEvent(SheepDyeWoolEvent event) { count++; }
 }

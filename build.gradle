@@ -9,14 +9,9 @@ version = '1.0.0'
 
 repositories {
     mavenCentral()
-    maven {
-        name = "spigotmc-repo"
-        url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"
-    }
-    maven {
-        name = "sonatype"
-        url = "https://oss.sonatype.org/content/groups/public/"
-    }
+    maven { url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/" }
+    maven { url = "https://oss.sonatype.org/content/groups/public/" }
+    maven { url = "https://repo.codemc.io/repository/maven-public/" }
 }
 
 dependencies {
@@ -26,8 +21,8 @@ dependencies {
     implementation 'com.zaxxer:HikariCP:5.1.0'
     implementation 'org.xerial:sqlite-jdbc:3.45.2.0'
     implementation 'com.mysql:mysql-connector-j:8.3.0'
-    implementation 'org.bstats:bstats-bukkit:3.0.2'
-    testImplementation 'org.mockito:mockito-core:5.11.0'
+    implementation 'org.bstats:bstats-bukkit-lite:1.8'
+    //testImplementation 'org.mockito:mockito-core:5.11.0'
 }
 
 def targetJavaVersion = 17
@@ -35,28 +30,41 @@ java {
     def javaVersion = JavaVersion.toVersion(targetJavaVersion)
     sourceCompatibility = javaVersion
     targetCompatibility = javaVersion
-    if (JavaVersion.current() < javaVersion) {
-        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
-    }
+    if (JavaVersion.current() < javaVersion) toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
 }
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
-    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
-        options.release.set(targetJavaVersion)
-    }
+    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) options.release.set(targetJavaVersion)
 }
 
 processResources {
     def props = [version: version]
     inputs.properties props
     filteringCharset 'UTF-8'
-    filesMatching('plugin.yml') {
-        expand props
-    }
+    filesMatching('plugin.yml') { expand props }
 }
 
 jar {
     destinationDirectory = file('/home/lichenaut/purpur/plugins')
     archiveFileName = 'WorldGrowth.jar'
 }
+
+shadowJar {
+    minimize {
+        exclude(dependency('com.google.code.gson:.*'))
+        exclude(dependency('org.intellij:.*'))
+        exclude(dependency('org.jetbrains:.*'))
+        exclude(dependency('org.slf4j:.*'))
+    }
+    relocate('org.bstats', 'com.lichenaut.dependencies.bstats')
+    relocate('com.zaxxer', 'com.lichenaut.dependencies.hikari')
+    mergeServiceFiles()
+
+    from 'build/libs'
+    into '/home/lichenaut/purpur/plugins'
+    include('WorldGrowth-' + version + '-all.jar')
+    rename('WorldGrowth-' + version + '-all.jar', 'WorldGrowth.jar')
+}
+
+jar.finalizedBy(shadowJar)

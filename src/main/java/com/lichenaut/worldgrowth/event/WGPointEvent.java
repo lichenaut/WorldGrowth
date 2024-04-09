@@ -1,74 +1,17 @@
 package com.lichenaut.worldgrowth.event;
 
-import com.lichenaut.worldgrowth.db.WGDBManager;
-import lombok.RequiredArgsConstructor;
-import org.apache.logging.log4j.Logger;
 import org.bukkit.event.Event;
 import org.bukkit.event.Listener;
 
-import java.sql.SQLException;
-import java.util.concurrent.CompletableFuture;
+public interface WGPointEvent<T extends Event> extends Listener {
 
-@RequiredArgsConstructor
-@SuppressWarnings("unused")
-public abstract class WGPointEvent<T extends Event> implements Listener {
+    void onEvent(T event);
 
-    private final String simpleClassName = this.getClass().getSimpleName();
-    protected final WGDBManager databaseManager;
-    protected final Logger logging;
-    protected final int quota;
-    protected final int points;
+    int getCount();
 
-    protected abstract void onEvent(T event);
+    void setCount(int count);
 
-    protected void incrementCount() {
-        CompletableFuture
-                .runAsync(() -> {
-                    try {
-                        databaseManager.incrementEventCount(simpleClassName);
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .exceptionallyAsync(e -> {
-                    logging.error("Database error when incrementing event count of type {}!", simpleClassName);
-                    logging.error(e);
-                    return null;
-                });
-    }
+    int getQuota();
 
-    public void checkCount() {
-        CompletableFuture
-                .supplyAsync(() -> {
-                    try {
-                        return databaseManager.getEventCount(simpleClassName);
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .thenComposeAsync(count -> CompletableFuture.supplyAsync(() -> {
-                    if (count < quota) return null;
-
-                    try {
-                        databaseManager.setEventCount(simpleClassName, count % quota);
-                        databaseManager.addPoints(count / quota * points);
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-
-                    try {
-                        return databaseManager.getPoints();
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                }))
-                .thenComposeAsync(points -> CompletableFuture.runAsync(() -> {
-                    if (points != null) logging.info("Points updated to {}", points);
-                }))
-                .exceptionallyAsync(e -> {
-                    logging.error("Database error when converting events to points for event type {}!", simpleClassName);
-                    logging.error(e);
-                    return null;
-                });
-    }
+    int getPointValue();
 }

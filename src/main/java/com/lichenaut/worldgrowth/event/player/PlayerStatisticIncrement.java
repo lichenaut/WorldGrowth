@@ -1,5 +1,6 @@
 package com.lichenaut.worldgrowth.event.player;
 
+import com.lichenaut.worldgrowth.Main;
 import com.lichenaut.worldgrowth.db.WGDBManager;
 import com.lichenaut.worldgrowth.event.WGPointEvent;
 import org.apache.logging.log4j.Logger;
@@ -15,8 +16,8 @@ public class PlayerStatisticIncrement extends WGPointEvent<PlayerStatisticIncrem
 
     private final Set<Statistic> statistics = new HashSet<>();
 
-    public PlayerStatisticIncrement(WGDBManager databaseManager, Logger logging, int quota, int points) {
-        super(databaseManager, logging, quota, points);
+    public PlayerStatisticIncrement(Main main, WGDBManager databaseManager, Logger logging, int quota, int points) {
+        super(main, databaseManager, logging, quota, points);
         statistics.add(Statistic.ARMOR_CLEANED);
         statistics.add(Statistic.BANNER_CLEANED);
         statistics.add(Statistic.CAKE_SLICES_EATEN);
