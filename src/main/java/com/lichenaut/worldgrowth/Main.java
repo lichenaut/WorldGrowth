@@ -1,11 +1,14 @@
 package com.lichenaut.worldgrowth;
 
+import com.lichenaut.Metrics;
 import com.lichenaut.worldgrowth.cmd.WGCommand;
 import com.lichenaut.worldgrowth.cmd.WGTabCompleter;
 import com.lichenaut.worldgrowth.db.WGDBManager;
 import com.lichenaut.worldgrowth.db.WGMySQLManager;
 import com.lichenaut.worldgrowth.db.WGSQLiteManager;
 import com.lichenaut.worldgrowth.event.WGPointEvent;
+import com.lichenaut.worldgrowth.event.block.BellResonate;
+import com.lichenaut.worldgrowth.event.block.BellRing;
 import com.lichenaut.worldgrowth.event.block.BlockBreak;
 import com.lichenaut.worldgrowth.runnable.WGRunnableManager;
 import com.lichenaut.worldgrowth.util.WGCopier;
@@ -14,7 +17,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import com.lichenaut.Metrics;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.event.HandlerList;
@@ -158,11 +160,22 @@ public final class Main extends JavaPlugin {
 
                 int points = eventSection.getInt("points");
                 switch (event) {
+                    case "bell-resonate":
+                        BellResonate bellResonate = new BellResonate(databaseManager, logging, quota, points);
+                        pluginManager.registerEvents(bellResonate, this);
+                        pointEvents.add(bellResonate);
+                        break;
+                    case "bell-ring":
+                        BellRing bellRing = new BellRing(databaseManager, logging, quota, points);
+                        pluginManager.registerEvents(bellRing, this);
+                        pointEvents.add(bellRing);
+                        break;
                     case "block-break":
                         BlockBreak blockBreak = new BlockBreak(databaseManager, logging, quota, points);
                         pluginManager.registerEvents(blockBreak, this);
                         pointEvents.add(blockBreak);
                         break;
+                    //make event listener registerer class
                 }
             }
         }

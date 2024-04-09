@@ -1,4 +1,17 @@
 package com.lichenaut.worldgrowth.event.entity;
 
-public class EntitySpawn {
+import com.lichenaut.worldgrowth.db.WGDBManager;
+import com.lichenaut.worldgrowth.event.WGPointEvent;
+import org.apache.logging.log4j.Logger;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.entity.EntitySpawnEvent;
+
+public class EntitySpawn extends WGPointEvent<EntitySpawnEvent> {
+
+    public EntitySpawn(WGDBManager databaseManager, Logger logging, int quota, int points) { super(databaseManager, logging, quota, points); }
+
+    @Override
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    protected void onEvent(EntitySpawnEvent event) { incrementCount(); }
 }

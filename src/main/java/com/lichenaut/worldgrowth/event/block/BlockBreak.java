@@ -9,9 +9,9 @@ import org.bukkit.event.block.BlockBreakEvent;
 
 public class BlockBreak extends WGPointEvent<BlockBreakEvent> {
 
-    public BlockBreak(WGDBManager databaseManager, Logger logging, int quota, int points) {super(databaseManager, logging, quota, points);}
+    public BlockBreak(WGDBManager databaseManager, Logger logging, int quota, int points) { super(databaseManager, logging, quota, points); }
 
     @Override
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-    protected void onEvent(BlockBreakEvent event) {incrementCount();}
+    protected void onEvent(BlockBreakEvent event) { incrementCount(); }
 }

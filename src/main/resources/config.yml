@@ -51,6 +51,7 @@ max-growth-quota: 1024
 growth-size: 4
 
 #The maximum amount of blocks the world border can grow per hour.
+  #Point gaining turns off when the maximum is reached, and turns back on when the hour is up.
 max-block-growth-per-hour: 96
 
 
@@ -143,7 +144,6 @@ events:
   furnace-smelt:
   furnace-start-smelt:
   hopper-inventory-search:
-  inventory-block-start:
   leaves-decay:
     quota: 256
     points: 1
@@ -161,7 +161,7 @@ events:
   arrow-body-count-change:
     quota: 32
     points: 1
-  bat-toggle-sleep: #Note: I'm giving this event a quota out of pity for it lol
+  bat-toggle-sleep: #Note 1: I'm giving this event a quota out of pity for it lol
     quota: 256
     points: 1
   creeper-power:
@@ -221,7 +221,6 @@ events:
   entity-regain-health:
     quota: 512
     points: 1
-  entity-remove:
   entity-resurrect:
     quota: 1
     points: 1
@@ -293,7 +292,6 @@ events:
 
   #PlayerEvent
   async-player-chat:
-  async-player-chat-preview:
   player-advancement-done:
     quota: 2
     points: 1
@@ -316,9 +314,8 @@ events:
   player-exp-change:
     quota: 1024
     points: 1
-  player-exp-cooldown-change:
-  player-fish:
-    quota: 256
+  player-fish: #Note 2: This only counts the bite state.
+    quota: 16
     points: 1
   player-game-mode-change:
   player-harvest-block:
@@ -346,6 +343,8 @@ events:
   player-recipe-book-click:
   player-recipe-book-settings-change:
   player-recipe-discover:
+    quota: 64
+    points: 1
   player-resource-pack-status:
   player-respawn:
   player-riptide:
@@ -355,9 +354,10 @@ events:
     quota: 32
     points: 1
   player-show-entity:
-  player-sign-open:
   player-spawn-location:
-  player-statistic-increment:
+  player-statistic-increment: #Note 3: I filtered this down to make it reasonable.
+    quota: 256
+    points: 1
   player-swap-hand-items:
   player-take-lectern-book:
   player-teleport:
@@ -365,3 +365,5 @@ events:
   player-toggle-sneak:
   player-toggle-sprint:
   player-velocity:
+
+  #CustomEvent
