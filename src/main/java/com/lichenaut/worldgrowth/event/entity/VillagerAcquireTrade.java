@@ -1,18 +1,19 @@
 package com.lichenaut.worldgrowth.event.entity;
 
-import com.lichenaut.worldgrowth.Main;
-import com.lichenaut.worldgrowth.db.WGDBManager;
 import com.lichenaut.worldgrowth.event.WGPointEvent;
-import org.apache.logging.log4j.Logger;
+import lombok.Data;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.entity.VillagerAcquireTradeEvent;
 
-public class VillagerAcquireTrade extends WGPointEvent<VillagerAcquireTradeEvent> {
+@Data
+public class VillagerAcquireTrade implements WGPointEvent<VillagerAcquireTradeEvent> {
 
-    public VillagerAcquireTrade(Main main, WGDBManager databaseManager, Logger logging, int quota, int points) { super(main, databaseManager, logging, quota, points); }
+    private final int quota;
+    private final int pointValue;
+    private int count;
 
     @Override
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-    protected void onEvent(VillagerAcquireTradeEvent event) { count++; }
+    public void onEvent(VillagerAcquireTradeEvent event) { count++; }
 }

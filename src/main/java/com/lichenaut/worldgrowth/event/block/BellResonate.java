@@ -11,7 +11,7 @@ public class BellResonate implements WGPointEvent<BellResonateEvent> {
 
     private final int quota;
     private final int pointValue;
-    private int count = 0;
+    private int count;
 
     @Override
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)

@@ -1,18 +1,19 @@
 package com.lichenaut.worldgrowth.event.entity;
 
-import com.lichenaut.worldgrowth.Main;
-import com.lichenaut.worldgrowth.db.WGDBManager;
 import com.lichenaut.worldgrowth.event.WGPointEvent;
-import org.apache.logging.log4j.Logger;
+import lombok.Data;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.entity.EntityMountEvent;
 
-public class EntityMount extends WGPointEvent<EntityMountEvent> {
+@Data
+public class EntityMount implements WGPointEvent<EntityMountEvent> {
 
-    public EntityMount(Main plugin, WGDBManager databaseManager, Logger logging, int quota, int points) { super(plugin, databaseManager, logging, quota, points); }
+    private final int quota;
+    private final int pointValue;
+    private int count;
 
     @Override
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-    protected void onEvent(EntityMountEvent event) { count++; }
+    public void onEvent(EntityMountEvent event) { count++; }
 }

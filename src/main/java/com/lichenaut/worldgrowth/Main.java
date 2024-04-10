@@ -6,18 +6,18 @@ import com.lichenaut.worldgrowth.db.WGDBManager;
 import com.lichenaut.worldgrowth.db.WGMySQLManager;
 import com.lichenaut.worldgrowth.db.WGSQLiteManager;
 import com.lichenaut.worldgrowth.event.WGPointEvent;
-import com.lichenaut.worldgrowth.event.block.BellResonate;
-import com.lichenaut.worldgrowth.runnable.WGEventChecker;
+import com.lichenaut.worldgrowth.runnable.WGEventCounter;
 import com.lichenaut.worldgrowth.runnable.WGRunnableManager;
 import com.lichenaut.worldgrowth.util.WGCopier;
 import com.lichenaut.worldgrowth.util.WGMessager;
+import com.lichenaut.worldgrowth.util.WGRegisterer;
+import com.lichenaut.worldgrowth.util.WGVarDeSerializer;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bstats.bukkit.MetricsLite;
 import org.bukkit.configuration.Configuration;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -40,15 +40,17 @@ public final class Main extends JavaPlugin {
     private final Main plugin = this;
     private final Logger logging = LogManager.getLogger("WorldGrowth");
     private final WGMessager messager = new WGMessager(this);
-    private final String separator = FileSystems.getDefault().getSeparator();
     private final PluginManager pluginManager = getServer().getPluginManager();
+    private final String separator = FileSystems.getDefault().getSeparator();
     private final Set<WGPointEvent<?>> pointEvents = new HashSet<>();
-    private int points = 0;
-    WGRunnableManager pointManager = new WGRunnableManager(this);
+    private int borderQuota;
+    private int points;
+    private final WGRunnableManager counterManager = new WGRunnableManager(this);
     private int boostMultiplier = 1;
     private WGRunnableManager boostManager = new WGRunnableManager(this);
     private Configuration configuration;
     private WGDBManager databaseManager;
+    private WGVarDeSerializer varDeSerializer;
 
     @Override
     public void onEnable() {
@@ -89,13 +91,13 @@ public final class Main extends JavaPlugin {
         }
 
         String url = configuration.getString("database-url");
-        String username = configuration.getString("database-username");
+        String user = configuration.getString("database-user");
         String password = configuration.getString("database-password");
         int maxPoolSize = configuration.getInt("database-max-pool-size");
         String finalUrl;
-        if (url != null && username != null && password != null) {
+        if (url != null && user != null && password != null) {
             logging.info("Database information given in config.yml. Using a remote database.");
-            if (databaseManager == null || databaseManager instanceof WGSQLiteManager) databaseManager = new WGMySQLManager(this, messager);
+            if (databaseManager == null || databaseManager instanceof WGSQLiteManager) databaseManager = new WGMySQLManager(this, configuration, messager);
             finalUrl = "jdbc:mysql://" + url;
         } else {
             logging.info("Database information not given in config.yml. Using a local database.");
@@ -105,64 +107,43 @@ public final class Main extends JavaPlugin {
                 logging.error("Error while creating local database file!");
                 throw new RuntimeException(e);
             }
-            if (databaseManager == null || databaseManager instanceof WGMySQLManager) databaseManager = new WGSQLiteManager(this, messager);
+            if (databaseManager == null || databaseManager instanceof WGMySQLManager) databaseManager = new WGSQLiteManager(this, configuration, messager);
             finalUrl = "jdbc:sqlite:" + getDataFolder().getPath() + separator + "worldgrowth.db";
         }
+        varDeSerializer = new WGVarDeSerializer(this, logging, pointEvents, counterManager, databaseManager);
+
         CompletableFuture
-                .runAsync(() -> databaseManager.initializeDataSource(finalUrl, username, password, maxPoolSize))
-                .thenComposeAsync(connected -> CompletableFuture.runAsync(() -> {
+                .runAsync(() -> databaseManager.initializeDataSource(finalUrl, user, password, maxPoolSize))
+                .thenAcceptAsync(connected -> {
                     try {
                         databaseManager.createStructure();
                     } catch (SQLException e) {
                         throw new RuntimeException(e);
                     }
-                }))
-                .thenComposeAsync(structured -> CompletableFuture.runAsync(() ->
-                        pointManager.addRunnable(new WGEventChecker(this, logging, pointEvents, pointManager), 1000L)))
-                .thenComposeAsync(queued -> CompletableFuture.runAsync(() -> {
+                })
+                .thenAcceptAsync(structured -> {
                     try {
+                        varDeSerializer.deserializePointsQuota();
                         databaseManager.deserializeRunnableQueue(boostManager, "SELECT `multiplier`, `delay` FROM `boosts`", "boosts");
                     } catch (SQLException e) {
                         throw new RuntimeException(e);
                     }
-                }))
-                .thenAcceptAsync(deserialized -> logging.info("Database connection up and running."))
+                })
+                .thenAcceptAsync(deserialized -> {
+                    try {
+                        new WGRegisterer(this, configuration, databaseManager, pluginManager, varDeSerializer, pointEvents).registerEvents();
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .thenAcceptAsync(registered ->
+                        counterManager.addRunnable(new WGEventCounter(this, logging, pointEvents, counterManager), 1000L))
+                .thenAcceptAsync(queued -> logging.info("Database connection up and running."))
                 .exceptionallyAsync(e -> {
-                    logging.error("Error during the database connecting, structuring, queueing, and deserializing process!");
+                    logging.error("Error during the database connecting, structuring, deserializing, queueing, and registering process!");
                     logging.error(e);
                     return null;
                 });
-
-        ConfigurationSection events = configuration.getConfigurationSection("events");
-        if (databaseManager != null && events != null) {
-            for (String event : events.getKeys(false)) {
-                ConfigurationSection eventSection = events.getConfigurationSection(event);
-                if (eventSection == null) continue;
-
-                int quota = eventSection.getInt("quota");
-                if (quota < 1) continue;
-
-                int pointValue = eventSection.getInt("points");
-                switch (event) {
-                    case "bell-resonate":
-                        BellResonate bellResonate = new BellResonate(quota, pointValue);
-                        pluginManager.registerEvents(bellResonate, this);
-                        pointEvents.add(bellResonate);
-                        break;
-                    /*case "bell-ring":
-                        BellRing bellRing = new BellRing(quota, pointValue);
-                        pluginManager.registerEvents(bellRing, this);
-                        pointEvents.add(bellRing);
-                        break;
-                    case "block-break":
-                        BlockBreak blockBreak = new BlockBreak(quota, pointValue);
-                        pluginManager.registerEvents(blockBreak, this);
-                        pointEvents.add(blockBreak);
-                        break;*/
-                    //make event listener registerer class
-                }
-            }
-        }
     }
 
     @Override
@@ -170,6 +151,7 @@ public final class Main extends JavaPlugin {
         if (databaseManager == null) return;
 
         try {
+            varDeSerializer.serializeCountsQuotaPoints();
             databaseManager.serializeRunnableQueue(boostManager, "INSERT INTO `boosts` (`multiplier`, `delay`) VALUES (?, ?)");
         } catch (SQLException e) {
             logging.error("Error while serializing boost queue!");

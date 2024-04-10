@@ -60,11 +60,14 @@ shadowJar {
     relocate('org.bstats', 'com.lichenaut.dependencies.bstats')
     relocate('com.zaxxer', 'com.lichenaut.dependencies.hikari')
     mergeServiceFiles()
+}
 
-    from 'build/libs'
-    into '/home/lichenaut/purpur/plugins'
+tasks.register('copyShadedJar', Copy) {
+    dependsOn shadowJar
+    from("build/libs")
+    into('/home/lichenaut/purpur/plugins')
     include('WorldGrowth-' + version + '-all.jar')
     rename('WorldGrowth-' + version + '-all.jar', 'WorldGrowth.jar')
 }
 
-jar.finalizedBy(shadowJar)
+jar.finalizedBy('copyShadedJar')

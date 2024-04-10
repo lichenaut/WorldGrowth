@@ -61,9 +61,9 @@ max-block-growth-per-hour: 96
 
 #WorldGrowth will store data in its plugin folder's SQLite database if a MySQL database is not provided.
 database-url: #"localhost:3306/example_db"
-database-username: #"root"
+database-user: #"root"
 database-password: #""
-  #Optimal size formula: (cpu_core_count * 2) + effective_spindle_count, assuming this is the only HikariCP-using plugin on the server.
+  #https://github.com/brettwooldridge/HikariCP/wiki/About-Pool-Sizing#connections--core_count--2--effective_spindle_count
 database-max-pool-size: 16
 
 #If empty, WorldGrowth will affect all worlds.
@@ -130,7 +130,7 @@ events:
   block-receive-game:
   block-redstone:
   block-shear-entity:
-    quota: 24
+    quota: 48
     points: 1
   brew:
     quota: 16
@@ -315,7 +315,7 @@ events:
   player-exp-change:
     quota: 1024
     points: 1
-  player-fish: #Note 2: This only counts the bite state.
+  player-fish: #Note 2: This only counts the CAUGHT_FISH state.
     quota: 16
     points: 1
   player-game-mode-change:

@@ -10,32 +10,33 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
-public class WGEventChecker extends BukkitRunnable {
+public class WGEventCounter extends BukkitRunnable {
 
     private final Main main;
     private final Logger logging;
     private final Set<WGPointEvent<?>> pointEvents;
-    private final WGRunnableManager pointManager;
+    private final WGRunnableManager counterManager;
 
     @Override
     public void run() {
         CompletableFuture<Void> future = CompletableFuture.completedFuture(null);
-        for (WGPointEvent<?> pointEvent : pointEvents) future = future.thenAcceptAsync(checked -> checkCount(pointEvent));
+        for (WGPointEvent<?> pointEvent : pointEvents) {
+            future = future
+                    .thenAcceptAsync(counted -> {
+                        int quota = pointEvent.getQuota();
+                        int count = pointEvent.getCount();
+                        if (count < quota) return;
+
+                        pointEvent.setCount(count % quota);
+                        main.addPoints(count / quota * pointEvent.getPointValue());
+            });
+        }
         future.whenComplete((result, e) -> {
             if (e != null) {
                 logging.error("Error while converting event counts to points!");
                 logging.error(e);
             }
-            pointManager.addRunnable(this, 6000L);
+            counterManager.addRunnable(this, 6000L);
         });
-    }
-
-    public void checkCount(WGPointEvent<?> event) {
-        int quota = event.getQuota();
-        int count = event.getCount();
-        if (count < quota) return;
-
-        event.setCount(count % quota);
-        main.addPoints(count / quota * event.getPointValue());
     }
 }

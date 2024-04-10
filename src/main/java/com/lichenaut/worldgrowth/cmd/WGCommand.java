@@ -28,6 +28,11 @@ public class WGCommand implements CommandExecutor {
         }
 
         switch (strings[0]) {
+            case "progress" -> {
+                if (checkDisallowed(commandSender, "worldgrowth.progress")) return true;
+                //messager.sendMsg(commandSender, );
+                return true;
+            }
             case "help" -> {
                 if (checkDisallowed(commandSender, "worldgrowth.help")) return true;
                 messager.sendMsg(commandSender, messager.getHelpCommand());

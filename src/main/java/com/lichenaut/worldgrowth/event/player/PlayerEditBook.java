@@ -1,18 +1,19 @@
 package com.lichenaut.worldgrowth.event.player;
 
-import com.lichenaut.worldgrowth.Main;
-import com.lichenaut.worldgrowth.db.WGDBManager;
 import com.lichenaut.worldgrowth.event.WGPointEvent;
-import org.apache.logging.log4j.Logger;
+import lombok.Data;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.player.PlayerEditBookEvent;
 
-public class PlayerEditBook extends WGPointEvent<PlayerEditBookEvent> {
+@Data
+public class PlayerEditBook implements WGPointEvent<PlayerEditBookEvent> {
 
-    public PlayerEditBook(Main main, WGDBManager databaseManager, Logger logging, int quota, int points) { super(main, databaseManager, logging, quota, points); }
+    private final int quota;
+    private final int pointValue;
+    private int count;
 
     @Override
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-    protected void onEvent(PlayerEditBookEvent event) { count++; }
+    public void onEvent(PlayerEditBookEvent event) { count++; }
 }

@@ -7,6 +7,7 @@ import com.lichenaut.worldgrowth.runnable.WGRunnableManager;
 import com.lichenaut.worldgrowth.util.WGMessager;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.RequiredArgsConstructor;
+import org.bukkit.configuration.Configuration;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.sql.*;
@@ -16,14 +17,15 @@ import java.util.LinkedList;
 public class WGSQLiteManager implements WGDBManager {
 
     private final Main plugin;
+    private final Configuration configuration;
     private final WGMessager messager;
     private HikariDataSource dataSource;
 
     @Override
-    public void initializeDataSource(String url, String username, String password, int maxPoolSize) {
+    public void initializeDataSource(String url, String user, String password, int maxPoolSize) {
         dataSource = new HikariDataSource();
         dataSource.setDataSourceClassName("org.sqlite.SQLiteDataSource");
-        dataSource.setUsername(username);
+        dataSource.setUsername(user);
         dataSource.setPassword(password);
         dataSource.setMaximumPoolSize(maxPoolSize);
     }
@@ -75,12 +77,15 @@ public class WGSQLiteManager implements WGDBManager {
     }
 
     @Override
-    public void incrementEventCount(String type) throws SQLException {
+    public int getQuota() throws SQLException {
         try (Connection connection = dataSource.getConnection()) {
-            try (PreparedStatement statement = connection.prepareStatement(
-                    "INSERT INTO events (type, count) VALUES (?, 1) ON CONFLICT(type) DO UPDATE SET count = count + 1")) {
-                statement.setString(1, type);
-                statement.executeUpdate();
+            try (ResultSet resultSet = connection.createStatement().executeQuery(
+                    "SELECT `quota` FROM `global`")) {
+                if (resultSet.next()) {
+                    return resultSet.getInt("quota");
+                } else {
+                    return configuration.getInt("starting-growth-quota"); //TODO: change the way this is retrieved once more is done.
+                }
             }
         }
     }
@@ -93,7 +98,7 @@ public class WGSQLiteManager implements WGDBManager {
                 if (resultSet.next()) {
                     return resultSet.getInt("points");
                 } else {
-                    throw new RuntimeException();
+                    return 0;
                 }
             }
         }
@@ -106,6 +111,20 @@ public class WGSQLiteManager implements WGDBManager {
                     "INSERT INTO global (quota, points) VALUES (0, ?) ON CONFLICT(quota) DO UPDATE SET points = points + ?")) {
                 statement.setInt(1, points);
                 statement.setInt(2, points);
+                statement.executeUpdate();
+            }
+        }
+    }
+
+    @Override
+    public void setGlobal(int quota, int points) throws SQLException {
+        try (Connection connection = dataSource.getConnection()) {
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "INSERT INTO `global` (`quota`, `points`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `quota` = ?, `points` = ?")) {
+                statement.setInt(1, quota);
+                statement.setInt(2, points);
+                statement.setInt(3, quota);
+                statement.setInt(4, points);
                 statement.executeUpdate();
             }
         }

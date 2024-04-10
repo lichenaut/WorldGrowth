@@ -1,18 +1,19 @@
 package com.lichenaut.worldgrowth.event.entity;
 
-import com.lichenaut.worldgrowth.Main;
-import com.lichenaut.worldgrowth.db.WGDBManager;
 import com.lichenaut.worldgrowth.event.WGPointEvent;
-import org.apache.logging.log4j.Logger;
+import lombok.Data;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.entity.VillagerCareerChangeEvent;
 
-public class VillagerCareerChange extends WGPointEvent<VillagerCareerChangeEvent> {
+@Data
+public class VillagerCareerChange implements WGPointEvent<VillagerCareerChangeEvent> {
 
-    public VillagerCareerChange(Main main, WGDBManager databaseManager, Logger logging, int quota, int points) { super(main, databaseManager, logging, quota, points); }
+    private final int quota;
+    private final int pointValue;
+    private int count;
 
     @Override
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-    protected void onEvent(VillagerCareerChangeEvent event) { count++; }
+    public void onEvent(VillagerCareerChangeEvent event) { count++; }
 }

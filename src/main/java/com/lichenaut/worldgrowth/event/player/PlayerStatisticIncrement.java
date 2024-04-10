@@ -1,9 +1,7 @@
 package com.lichenaut.worldgrowth.event.player;
 
-import com.lichenaut.worldgrowth.Main;
-import com.lichenaut.worldgrowth.db.WGDBManager;
 import com.lichenaut.worldgrowth.event.WGPointEvent;
-import org.apache.logging.log4j.Logger;
+import lombok.Data;
 import org.bukkit.Statistic;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -12,12 +10,17 @@ import org.bukkit.event.player.PlayerStatisticIncrementEvent;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PlayerStatisticIncrement extends WGPointEvent<PlayerStatisticIncrementEvent> {
+@Data
+public class PlayerStatisticIncrement implements WGPointEvent<PlayerStatisticIncrementEvent> {
 
     private final Set<Statistic> statistics = new HashSet<>();
+    private final int quota;
+    private final int pointValue;
+    private int count;
 
-    public PlayerStatisticIncrement(Main main, WGDBManager databaseManager, Logger logging, int quota, int points) {
-        super(main, databaseManager, logging, quota, points);
+    public PlayerStatisticIncrement(int quota, int pointValue) {
+        this.quota = quota;
+        this.pointValue = pointValue;
         statistics.add(Statistic.ARMOR_CLEANED);
         statistics.add(Statistic.BANNER_CLEANED);
         statistics.add(Statistic.CAKE_SLICES_EATEN);
@@ -30,7 +33,5 @@ public class PlayerStatisticIncrement extends WGPointEvent<PlayerStatisticIncrem
 
     @Override
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-    protected void onEvent(PlayerStatisticIncrementEvent event) {
-        if (statistics.contains(event.getStatistic())) incrementCount();
-    }
+    public void onEvent(PlayerStatisticIncrementEvent event) { if (statistics.contains(event.getStatistic())) count++; }
 }

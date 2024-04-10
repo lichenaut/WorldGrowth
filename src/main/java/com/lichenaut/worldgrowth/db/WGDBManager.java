@@ -6,7 +6,7 @@ import java.sql.SQLException;
 
 public interface WGDBManager {
 
-    void initializeDataSource(String url, String username, String password, int maxPoolSize);
+    void initializeDataSource(String url, String user, String password, int maxPoolSize);
 
     void closeDataSource();
 
@@ -16,11 +16,13 @@ public interface WGDBManager {
 
     void setEventCount(String type, int count) throws SQLException;
 
-    void incrementEventCount(String type) throws SQLException;
+    int getQuota() throws SQLException;
 
     int getPoints() throws SQLException;
 
     void addPoints(int points) throws SQLException;
+
+    void setGlobal(int quota, int points) throws SQLException;
 
     void serializeRunnableQueue(WGRunnableManager runnableManager, String statementString) throws SQLException;
 

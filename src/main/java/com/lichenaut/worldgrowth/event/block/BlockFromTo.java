@@ -1,18 +1,19 @@
 package com.lichenaut.worldgrowth.event.block;
 
-import com.lichenaut.worldgrowth.Main;
-import com.lichenaut.worldgrowth.db.WGDBManager;
 import com.lichenaut.worldgrowth.event.WGPointEvent;
-import org.apache.logging.log4j.Logger;
+import lombok.Data;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockFromToEvent;
 
-public class BlockFromTo extends WGPointEvent<BlockFromToEvent> {
+@Data
+public class BlockFromTo implements WGPointEvent<BlockFromToEvent> {
 
-    public BlockFromTo(Main plugin, WGDBManager databaseManager, Logger logging, int quota, int points) { super(plugin, databaseManager, logging, quota, points); }
+    private final int quota;
+    private final int pointValue;
+    private int count;
 
     @Override
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-    protected void onEvent(BlockFromToEvent event) { count++; }
+    public void onEvent(BlockFromToEvent event) { count++; }
 }

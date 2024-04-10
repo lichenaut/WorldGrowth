@@ -27,6 +27,8 @@ public class WGMessager {
     private final Main plugin;
     private final Properties properties = new Properties();
     private String locale;
+    private BaseComponent[] progressCommand1;
+    private BaseComponent[] progressCommand2;
     private BaseComponent[] helpCommand;
     private BaseComponent[] invalidCommand;
     private BaseComponent[] reloadCommand;
@@ -42,6 +44,8 @@ public class WGMessager {
         locale = plugin.getConfiguration().getString("locale");
         try (FileInputStream inputStream = new FileInputStream(new File(localesFolderString, locale + ".properties"))) {
             properties.load(inputStream);
+            progressCommand1 = loadMessage("progressCommand1");
+            progressCommand2 = loadMessage("progressCommand2");
             helpCommand = loadMessage("helpCommand");
             invalidCommand = loadMessage("invalidCommand");
             reloadCommand = loadMessage("reloadCommand");
