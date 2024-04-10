@@ -23,7 +23,7 @@ public class WGVarDeSerializer {
     public void serializeCountsQuotaPoints() throws SQLException {
         try {
             counterManager.getRunnableQueue().get(0).cancel();
-        } catch (IllegalStateException ignored) {}
+        } catch (IllegalStateException ignore) {}
 
         counterManager.getRunnableQueue().clear();
         new WGEventCounter(main, logging, pointEvents, counterManager).run();

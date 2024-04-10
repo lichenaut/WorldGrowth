@@ -190,6 +190,27 @@ public class WGMessager {
         return combined;
     }
 
+    public BaseComponent[] combineMessage(String msgString, BaseComponent[] msgComponent) {
+        if (msgString == null || msgString.isEmpty()) return msgComponent;
+
+        BaseComponent[] textComponent = new BaseComponent[]{TextComponent.fromLegacy(msgString)};
+
+        ComponentBuilder builder = new ComponentBuilder("");
+        ArrayList<Object> lastFormat = continueFormat(msgComponent);
+        builder.color((ChatColor) lastFormat.get(0));
+        Object lastStyle = lastFormat.get(1);
+        if (lastStyle != null) builder.style((ComponentStyle) lastStyle);
+        for (BaseComponent component : textComponent) builder.append(component);
+        textComponent = builder.create();
+
+        int msgLength = msgComponent.length;
+        int textLength = textComponent.length;
+        BaseComponent[] combined = new BaseComponent[msgLength + textLength];
+        System.arraycopy(textComponent, 0, combined, msgLength, textLength);
+        System.arraycopy(msgComponent, 0, combined, 0, msgLength);
+        return combined;
+    }
+
     private static ArrayList<Object> continueFormat(BaseComponent[] components) {
         ArrayList<Object> format = new ArrayList<>();
         format.add(ChatColor.WHITE);

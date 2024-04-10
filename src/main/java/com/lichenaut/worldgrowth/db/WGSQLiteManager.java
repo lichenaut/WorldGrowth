@@ -25,6 +25,7 @@ public class WGSQLiteManager implements WGDBManager {
     public void initializeDataSource(String url, String user, String password, int maxPoolSize) {
         dataSource = new HikariDataSource();
         dataSource.setDataSourceClassName("org.sqlite.SQLiteDataSource");
+        dataSource.addDataSourceProperty("url", url);
         dataSource.setUsername(user);
         dataSource.setPassword(password);
         dataSource.setMaximumPoolSize(maxPoolSize);
@@ -70,7 +71,6 @@ public class WGSQLiteManager implements WGDBManager {
                     "INSERT OR REPLACE INTO events (type, count) VALUES (?, ?)")) {
                 statement.setString(1, type);
                 statement.setInt(2, count);
-                statement.setInt(3, count);
                 statement.executeUpdate();
             }
         }
@@ -120,11 +120,9 @@ public class WGSQLiteManager implements WGDBManager {
     public void setGlobal(int quota, int points) throws SQLException {
         try (Connection connection = dataSource.getConnection()) {
             try (PreparedStatement statement = connection.prepareStatement(
-                    "INSERT INTO `global` (`quota`, `points`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `quota` = ?, `points` = ?")) {
+                    "INSERT INTO global (quota, points) VALUES (?, ?) ON CONFLICT(quota) DO UPDATE SET points = EXCLUDED.points")) {
                 statement.setInt(1, quota);
                 statement.setInt(2, points);
-                statement.setInt(3, quota);
-                statement.setInt(4, points);
                 statement.executeUpdate();
             }
         }

@@ -30,7 +30,18 @@ public class WGCommand implements CommandExecutor {
         switch (strings[0]) {
             case "progress" -> {
                 if (checkDisallowed(commandSender, "worldgrowth.progress")) return true;
-                //messager.sendMsg(commandSender, );
+
+                int greenBars = (int) (double) plugin.getPoints() / plugin.getBorderQuota() * 33;
+                int grayBars = 33 - greenBars;
+                StringBuilder progressBar = new StringBuilder("[");
+                progressBar.append("=".repeat(Math.max(0, greenBars)));
+                progressBar.append(" ".repeat(Math.max(0, grayBars)));
+                progressBar.append("]\n");
+
+                /*messager.sendMsg(commandSender,
+                        messager.concatArrays(
+                                messager.combineMessage(progressBar.toString(), messager.getProgressCommand1()),
+                                messager.combineMessage(String.valueOf()), messager.getProgressCommand2()),*/
                 return true;
             }
             case "help" -> {

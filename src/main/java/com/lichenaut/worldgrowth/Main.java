@@ -17,6 +17,7 @@ import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bstats.bukkit.MetricsLite;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.PluginManager;
@@ -39,15 +40,16 @@ public final class Main extends JavaPlugin {
 
     private final Main plugin = this;
     private final Logger logging = LogManager.getLogger("WorldGrowth");
-    private final WGMessager messager = new WGMessager(this);
     private final PluginManager pluginManager = getServer().getPluginManager();
     private final String separator = FileSystems.getDefault().getSeparator();
+    private final WGMessager messager = new WGMessager(this);
+    private final WGRunnableManager counterManager = new WGRunnableManager(this);
     private final Set<WGPointEvent<?>> pointEvents = new HashSet<>();
     private int borderQuota;
     private int points;
-    private final WGRunnableManager counterManager = new WGRunnableManager(this);
     private int boostMultiplier = 1;
     private WGRunnableManager boostManager = new WGRunnableManager(this);
+    private PluginCommand wgCommand;
     private Configuration configuration;
     private WGDBManager databaseManager;
     private WGVarDeSerializer varDeSerializer;
@@ -55,22 +57,23 @@ public final class Main extends JavaPlugin {
     @Override
     public void onEnable() {
         new MetricsLite(plugin, 21539);
+        wgCommand = Objects.requireNonNull(getCommand("wg"));
         getConfig().options().copyDefaults();
         saveDefaultConfig();
         reloadWG();
-        Objects.requireNonNull(getCommand("wg")).setExecutor(new WGCommand(this, messager));
-        Objects.requireNonNull(getCommand("wg")).setTabCompleter(new WGTabCompleter());
     }
 
     public void reloadWG() {
         HandlerList.unregisterAll(this);
+        wgCommand.setExecutor(null);
+        wgCommand.setTabCompleter(null);
         pointEvents.clear();
 
         reloadConfig();
         configuration = getConfig();
         if (configuration.getBoolean("disable-plugin")) {
             logging.info("Plugin is disabled in config.yml. Disabling WorldGrowth.");
-            getServer().getPluginManager().disablePlugin(this);
+            pluginManager.disablePlugin(this);
         }
 
         String localesFolderString = getDataFolder().getPath() + separator + "locales";
@@ -90,6 +93,9 @@ public final class Main extends JavaPlugin {
             throw new RuntimeException(e);
         }
 
+        wgCommand.setExecutor(new WGCommand(this, messager));
+        wgCommand.setTabCompleter(new WGTabCompleter());
+
         String url = configuration.getString("database-url");
         String user = configuration.getString("database-user");
         String password = configuration.getString("database-password");
@@ -101,17 +107,18 @@ public final class Main extends JavaPlugin {
             finalUrl = "jdbc:mysql://" + url;
         } else {
             logging.info("Database information not given in config.yml. Using a local database.");
+            String outFilePath = getDataFolder().getPath() + separator + "worldgrowth.db";
             try {
-                WGCopier.smallCopy(getResource("worldgrowth.db"), getDataFolder().getPath() + separator + "worldgrowth.db");
+                WGCopier.smallCopy(getResource("worldgrowth.db"), outFilePath);
             } catch (IOException e) {
                 logging.error("Error while creating local database file!");
                 throw new RuntimeException(e);
             }
             if (databaseManager == null || databaseManager instanceof WGMySQLManager) databaseManager = new WGSQLiteManager(this, configuration, messager);
-            finalUrl = "jdbc:sqlite:" + getDataFolder().getPath() + separator + "worldgrowth.db";
+            finalUrl = "jdbc:sqlite:" + outFilePath;
         }
-        varDeSerializer = new WGVarDeSerializer(this, logging, pointEvents, counterManager, databaseManager);
 
+        varDeSerializer = new WGVarDeSerializer(this, logging, pointEvents, counterManager, databaseManager);
         CompletableFuture
                 .runAsync(() -> databaseManager.initializeDataSource(finalUrl, user, password, maxPoolSize))
                 .thenAcceptAsync(connected -> {
