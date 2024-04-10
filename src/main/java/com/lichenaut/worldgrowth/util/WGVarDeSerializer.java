@@ -17,16 +17,16 @@ public class WGVarDeSerializer {
     private final Main main;
     private final Logger logging;
     private final Set<WGPointEvent<?>> pointEvents;
-    private final WGRunnableManager counterManager;
+    private final WGRunnableManager eventCounterManager;
     private final WGDBManager databaseManager;
 
     public void serializeCountsQuotaPoints() throws SQLException {
         try {
-            counterManager.getRunnableQueue().get(0).cancel();
+            eventCounterManager.getRunnableQueue().get(0).cancel();
         } catch (IllegalStateException ignore) {}
 
-        counterManager.getRunnableQueue().clear();
-        new WGEventCounter(main, logging, pointEvents, counterManager).run();
+        eventCounterManager.getRunnableQueue().clear();
+        new WGEventCounter(main, logging, pointEvents, eventCounterManager).run();
 
         for (WGPointEvent<?> event : pointEvents) databaseManager.setEventCount(event.getClass().getSimpleName(), event.getCount());
         databaseManager.setGlobal(main.getBorderQuota(), main.getPoints());

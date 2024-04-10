@@ -16,7 +16,7 @@ import java.util.LinkedList;
 @RequiredArgsConstructor
 public class WGSQLiteManager implements WGDBManager {
 
-    private final Main plugin;
+    private final Main main;
     private final Configuration configuration;
     private final WGMessager messager;
     private HikariDataSource dataSource;
@@ -42,7 +42,7 @@ public class WGSQLiteManager implements WGDBManager {
             try (Statement statement = connection.createStatement()) {
                 statement.execute("CREATE TABLE IF NOT EXISTS boosts (position INTEGER PRIMARY KEY AUTOINCREMENT, multiplier INTEGER NOT NULL, delay INTEGER NOT NULL);");
                 statement.execute("CREATE TABLE IF NOT EXISTS events (type VARCHAR(30) PRIMARY KEY NOT NULL, count INTEGER NOT NULL);");
-                statement.execute("CREATE TABLE IF NOT EXISTS global (quota INTEGER PRIMARY KEY NOT NULL, points INTEGER NOT NULL);");
+                statement.execute("CREATE TABLE IF NOT EXISTS global (quota INTEGER PRIMARY KEY NOT NULL, points INTEGER NOT NULL, size INTEGER NOT NULL, center VARCHAR(50) NOT NULL;");
             }
         }
     }
@@ -170,13 +170,13 @@ public class WGSQLiteManager implements WGDBManager {
                     while (resultSet.next()) {
                         int multiplier = resultSet.getInt("multiplier");
                         long delay = resultSet.getLong("delay");
-                        runnableManager.addRunnable(new WGBoost(plugin, messager, multiplier) {
+                        runnableManager.addRunnable(new WGBoost(main, multiplier) {
                             @Override
                             public void run() {
-                                runBoost(multiplier, delay);
+                                runBoost(delay);
                             }
                         }, 0L);
-                        runnableManager.addRunnable(new WGBoost(plugin, messager, 1) {
+                        runnableManager.addRunnable(new WGBoost(main, 1) {
                             @Override
                             public void run() {
                                 runReset();

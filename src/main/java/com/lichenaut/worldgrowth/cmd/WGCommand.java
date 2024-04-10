@@ -15,7 +15,7 @@ import javax.annotation.Nonnull;
 @RequiredArgsConstructor
 public class WGCommand implements CommandExecutor {
 
-    private final Main plugin;
+    private final Main main;
     private final WGMessager messager;
 
     @Override
@@ -31,7 +31,7 @@ public class WGCommand implements CommandExecutor {
             case "progress" -> {
                 if (checkDisallowed(commandSender, "worldgrowth.progress")) return true;
 
-                int greenBars = (int) (double) plugin.getPoints() / plugin.getBorderQuota() * 33;
+                int greenBars = (int) (double) main.getPoints() / main.getBorderQuota() * 33;
                 int grayBars = 33 - greenBars;
                 StringBuilder progressBar = new StringBuilder("[");
                 progressBar.append("=".repeat(Math.max(0, greenBars)));
@@ -51,7 +51,7 @@ public class WGCommand implements CommandExecutor {
             }
             case "reload" -> {
                 if (checkDisallowed(commandSender, "worldgrowth.reload")) return true;
-                plugin.reloadWG();
+                main.reloadWG();
                 messager.sendMsg(commandSender, messager.getReloadCommand());
                 return true;
             }
@@ -73,14 +73,14 @@ public class WGCommand implements CommandExecutor {
 
                 int multiplierInt = Integer.parseInt(multiplier);
                 long delay = Integer.parseInt(strings[2]);
-                WGRunnableManager boosterManager = plugin.getBoostManager();
-                boosterManager.addRunnable(new WGBoost(plugin, messager, multiplierInt) {
+                WGRunnableManager boosterManager = main.getBoostManager();
+                boosterManager.addRunnable(new WGBoost(main, multiplierInt) {
                     @Override
                     public void run() {
-                        runBoost(multiplierInt, delay);
+                        runBoost(delay);
                     }
                 }, 0L);
-                boosterManager.addRunnable(new WGBoost(plugin, messager, 1) {
+                boosterManager.addRunnable(new WGBoost(main, 1) {
                     @Override
                     public void run() {
                         runReset();

@@ -13,12 +13,10 @@ import java.util.concurrent.CompletableFuture;
 public class WGEventCounter extends BukkitRunnable {
 
     private final Main main;
-    private final Logger logging;
-    private final Set<WGPointEvent<?>> pointEvents;
-    private final WGRunnableManager counterManager;
 
     @Override
     public void run() {
+        Set<WGPointEvent<?>> pointEvents = main.getPointEvents();
         CompletableFuture<Void> future = CompletableFuture.completedFuture(null);
         for (WGPointEvent<?> pointEvent : pointEvents) {
             future = future
@@ -33,10 +31,11 @@ public class WGEventCounter extends BukkitRunnable {
         }
         future.whenComplete((result, e) -> {
             if (e != null) {
+                Logger logging = main.getLogging();
                 logging.error("Error while converting event counts to points!");
                 logging.error(e);
             }
-            counterManager.addRunnable(this, 6000L);
+            main.getEventCounterManager().addRunnable(this, 6000L);
         });
     }
 }

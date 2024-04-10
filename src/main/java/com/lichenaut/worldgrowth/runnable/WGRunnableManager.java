@@ -12,7 +12,7 @@ import java.util.LinkedList;
 @RequiredArgsConstructor
 public class WGRunnableManager {
 
-    private final Main plugin;
+    private final Main main;
     private final LinkedList<WGRunnable> runnableQueue = new LinkedList<>();
     private BukkitTask currentTask;
 
@@ -25,7 +25,7 @@ public class WGRunnableManager {
         WGRunnable runnable = runnableQueue.peek();
         if (runnable == null) return;
 
-        currentTask = plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+        currentTask = main.getServer().getScheduler().runTaskLater(main, () -> {
             try {
                 runnable.run();
             } finally {

@@ -27,16 +27,12 @@ worlds:
     growth-multiplier: 8
 
 
-#####################
-#Main World Settings#
-#####################
+#################
+#Global Settings#
+#################
 
-#If true, WorldGrowth will attempt to find a biome of this type from (0, 0). If it fails, it will use the default world spawn.
-  #Biome list: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/block/Biome.html
-starting-biome: "FLOWER_FOREST"
-
-#If uncommented, WorldGrowth will use these coordinates as the starting point.
-starting-coords: #"0 0"
+#The amount of blocks the diameter of the world border will increase by per growth (times the world's growth multiplier).
+growth-size: 4
 
 #The starting amount of points required to trigger a growth.
 starting-growth-quota: 16
@@ -47,12 +43,21 @@ increment-growth-quota-by: 8
 #The maximum amount of points required to trigger a growth.
 max-growth-quota: 1024
 
-#The amount of blocks the diameter of the world border will increase by per growth. Don't forget about 'growth-multiplier's!
-growth-size: 4
 
-#The maximum amount of blocks the world border can grow per hour.
-  #Point gaining turns off when the maximum is reached, and turns back on when the hour is up.
+#####################
+#Main World Settings#
+#####################
+
+#The maximum amount of blocks the main world border can grow per hour. Responsible for the world borders of all worlds. TODO
+  #Point gaining turns off when the maximum is reached, and turns back on when the hour is up. TODO
 max-block-growth-per-hour: 96
+
+#If true, WorldGrowth will attempt to find a biome of this type from (0, 0). If it fails, it will use the default world spawn. TODO
+  #Biome list: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/block/Biome.html
+starting-biome: "FLOWER_FOREST"
+
+#If uncommented, WorldGrowth will use these coordinates as the starting point instead of searching for a biome. TODO
+starting-coords: #"0 0"
 
 
 ###############
@@ -64,7 +69,7 @@ database-url: #"localhost:3306/example_db"
 database-user: #"root"
 database-password: #""
   #https://github.com/brettwooldridge/HikariCP/wiki/About-Pool-Sizing#connections--core_count--2--effective_spindle_count
-database-max-pool-size: 16
+database-max-pool-size: 8
 
 #If empty, WorldGrowth will affect all worlds.
 #To disable the plugin completely, scroll to the top of this file and set 'disable-plugin' to true.

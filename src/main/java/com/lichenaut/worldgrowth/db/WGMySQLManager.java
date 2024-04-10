@@ -16,7 +16,7 @@ import java.util.LinkedList;
 @RequiredArgsConstructor
 public class WGMySQLManager implements WGDBManager {
 
-    private final Main plugin;
+    private final Main main;
     private final Configuration configuration;
     private final WGMessager messager;
     private HikariDataSource dataSource;
@@ -52,7 +52,8 @@ public class WGMySQLManager implements WGDBManager {
             try (Statement statement = connection.createStatement()) {
                 statement.execute("CREATE TABLE IF NOT EXISTS `boosts` (`position` int NOT NULL AUTO_INCREMENT PRIMARY KEY, `multiplier` int NOT NULL, `delay` int NOT NULL)");
                 statement.execute("CREATE TABLE IF NOT EXISTS `events` (`type` varchar(30) NOT NULL PRIMARY KEY, `count` int NOT NULL)");
-                statement.execute("CREATE TABLE IF NOT EXISTS `global` (`quota` int NOT NULL PRIMARY KEY, `points` int NOT NULL)");
+                statement.execute("CREATE TABLE IF NOT EXISTS `global` (`quota` int NOT NULL PRIMARY KEY, `points` int NOT NULL, `size` int NOT NULL, `center` varchar(50) NOT NULL");
+                //TODO: add size and center support. optimize center size
             }
         }
     }
@@ -183,13 +184,13 @@ public class WGMySQLManager implements WGDBManager {
                     while (resultSet.next()) {
                         int multiplier = resultSet.getInt("multiplier");
                         long delay = resultSet.getLong("delay");
-                        runnableManager.addRunnable(new WGBoost(plugin, messager, multiplier) {
+                        runnableManager.addRunnable(new WGBoost(main, multiplier) {
                             @Override
                             public void run() {
-                                runBoost(multiplier, delay);
+                                runBoost(delay);
                             }
                         }, 0L);
-                        runnableManager.addRunnable(new WGBoost(plugin, messager, 1) {
+                        runnableManager.addRunnable(new WGBoost(main, 1) {
                             @Override
                             public void run() {
                                 runReset();

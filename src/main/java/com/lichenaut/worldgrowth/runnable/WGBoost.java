@@ -10,16 +10,16 @@ import org.bukkit.scheduler.BukkitRunnable;
 @RequiredArgsConstructor
 public abstract class WGBoost extends BukkitRunnable {
 
-    private final Main plugin;
-    private final WGMessager messager;
+    private final Main main;
     private final int multiplier;
     private long timeStarted;
 
-    public void runBoost(int multiplier, long delay) {
-        plugin.setBoostMultiplier(multiplier);
+    public void runBoost(long delay) {
+        main.setBoostMultiplier(multiplier);
         timeStarted = System.currentTimeMillis();
+        WGMessager messager = main.getMessager();
         messager.spreadMsg(
-                plugin.getConfiguration().getBoolean("broadcast-boosts"),
+                main.getConfiguration().getBoolean("broadcast-boosts"),
                 messager.concatArrays(
                     messager.combineMessage(messager.getBoostedGains1(), String.valueOf(multiplier)),
                     messager.combineMessage(messager.getBoostedGains2(), String.format("%.2f", (double) delay / 1200)),
@@ -27,9 +27,10 @@ public abstract class WGBoost extends BukkitRunnable {
     }
 
     public void runReset() {
-        plugin.setBoostMultiplier(1);
+        main.setBoostMultiplier(1);
+        WGMessager messager = main.getMessager();
         messager.spreadMsg(
-                plugin.getConfiguration().getBoolean("broadcast-boosts"),
+                main.getConfiguration().getBoolean("broadcast-boosts"),
                 messager.getDeboostedGains());
     }
 }

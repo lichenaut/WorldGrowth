@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class WGMessager {
 
-    private final Main plugin;
+    private final Main main;
     private final Properties properties = new Properties();
     private String locale;
     private BaseComponent[] progressCommand1;
@@ -41,7 +41,7 @@ public class WGMessager {
 
     public void loadLocaleMessages(String localesFolderString) throws IOException {
         properties.clear();
-        locale = plugin.getConfiguration().getString("locale");
+        locale = main.getConfiguration().getString("locale");
         try (FileInputStream inputStream = new FileInputStream(new File(localesFolderString, locale + ".properties"))) {
             properties.load(inputStream);
             progressCommand1 = loadMessage("progressCommand1");
@@ -61,7 +61,7 @@ public class WGMessager {
     private BaseComponent[] loadMessage(String key) {
         String message = properties.getProperty(key);
         if (message == null) {
-            plugin.getLogging().error("Missing message key: \"{}\" in locale: \"{}.properties\".", key, locale);
+            main.getLogging().error("Missing message key: \"{}\" in locale: \"{}.properties\".", key, locale);
             return new BaseComponent[]{new TextComponent("")};
         }
 
@@ -161,12 +161,12 @@ public class WGMessager {
     }
 
     public void spreadMsg(boolean broadcast, BaseComponent[] message) {
-        if (broadcast) plugin.getServer().spigot().broadcast(message);
+        if (broadcast) main.getServer().spigot().broadcast(message);
         infoLog(message);
     }
 
     private void infoLog(BaseComponent[] message) {
-        plugin.getLogging().info(new TextComponent(message).toLegacyText().replaceAll("§[0-9a-fA-FklmnoKLMNO]", ""));
+        main.getLogging().info(new TextComponent(message).toLegacyText().replaceAll("§[0-9a-fA-FklmnoKLMNO]", ""));
     }
 
     public BaseComponent[] combineMessage(BaseComponent[] msgComponent, String msgString) {

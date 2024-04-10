@@ -6,6 +6,7 @@ import com.lichenaut.worldgrowth.db.WGDBManager;
 import com.lichenaut.worldgrowth.db.WGMySQLManager;
 import com.lichenaut.worldgrowth.db.WGSQLiteManager;
 import com.lichenaut.worldgrowth.event.WGPointEvent;
+import com.lichenaut.worldgrowth.runnable.WGBorderGrower;
 import com.lichenaut.worldgrowth.runnable.WGEventCounter;
 import com.lichenaut.worldgrowth.runnable.WGRunnableManager;
 import com.lichenaut.worldgrowth.util.WGCopier;
@@ -38,16 +39,20 @@ import java.util.concurrent.CompletableFuture;
 @SuppressWarnings("unused")
 public final class Main extends JavaPlugin {
 
-    private final Main plugin = this;
     private final Logger logging = LogManager.getLogger("WorldGrowth");
     private final PluginManager pluginManager = getServer().getPluginManager();
     private final String separator = FileSystems.getDefault().getSeparator();
     private final WGMessager messager = new WGMessager(this);
-    private final WGRunnableManager counterManager = new WGRunnableManager(this);
+    private final WGRunnableManager eventCounterManager = new WGRunnableManager(this);
+    private WGRunnableManager growthCounterManager = new WGRunnableManager(this);
+    private final WGRunnableManager borderManager = new WGRunnableManager(this);
     private final Set<WGPointEvent<?>> pointEvents = new HashSet<>();
     private int borderQuota;
+    private int maxBorderQuota;
     private int points;
-    private int boostMultiplier = 1;
+    private int borderSize;
+    private int blocksGrownThisHour; //TODO: manager resets this value every hour
+    private int boostMultiplier;
     private WGRunnableManager boostManager = new WGRunnableManager(this);
     private PluginCommand wgCommand;
     private Configuration configuration;
@@ -56,7 +61,7 @@ public final class Main extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        new MetricsLite(plugin, 21539);
+        new MetricsLite(this, 21539);
         wgCommand = Objects.requireNonNull(getCommand("wg"));
         getConfig().options().copyDefaults();
         saveDefaultConfig();
@@ -118,7 +123,7 @@ public final class Main extends JavaPlugin {
             finalUrl = "jdbc:sqlite:" + outFilePath;
         }
 
-        varDeSerializer = new WGVarDeSerializer(this, logging, pointEvents, counterManager, databaseManager);
+        varDeSerializer = new WGVarDeSerializer(this, logging, pointEvents, eventCounterManager, databaseManager);
         CompletableFuture
                 .runAsync(() -> databaseManager.initializeDataSource(finalUrl, user, password, maxPoolSize))
                 .thenAcceptAsync(connected -> {
@@ -129,6 +134,7 @@ public final class Main extends JavaPlugin {
                     }
                 })
                 .thenAcceptAsync(structured -> {
+                    maxBorderQuota = configuration.getInt("max-growth-quota");
                     try {
                         varDeSerializer.deserializePointsQuota();
                         databaseManager.deserializeRunnableQueue(boostManager, "SELECT `multiplier`, `delay` FROM `boosts`", "boosts");
@@ -143,11 +149,15 @@ public final class Main extends JavaPlugin {
                         throw new RuntimeException(e);
                     }
                 })
-                .thenAcceptAsync(registered ->
-                        counterManager.addRunnable(new WGEventCounter(this, logging, pointEvents, counterManager), 1000L))
+                .thenAcceptAsync(registered -> {
+                    eventCounterManager.addRunnable(new WGEventCounter(this), 200L);
+                    WGBorderGrower borderGrower = new WGBorderGrower(this);
+                    borderGrower.buildWorlds();
+                    borderManager.addRunnable(borderGrower, 400L);
+                })
                 .thenAcceptAsync(queued -> logging.info("Database connection up and running."))
                 .exceptionallyAsync(e -> {
-                    logging.error("Error during the database connecting, structuring, deserializing, queueing, and registering process!");
+                    logging.error("Error during the database connecting, structuring, deserializing, registering, and queueing process!");
                     logging.error(e);
                     return null;
                 });
@@ -169,4 +179,12 @@ public final class Main extends JavaPlugin {
     }
 
     public void addPoints(int pointsToAdd) { points += pointsToAdd; }
+
+    public void addBlocksGrownThisHour(int blocksToAdd) { blocksGrownThisHour += blocksToAdd; }
+
+    public void addBorderQuota(int quotaToAdd) {
+        if (borderQuota + quotaToAdd > maxBorderQuota) return;
+
+        borderQuota += quotaToAdd;
+    }
 }
