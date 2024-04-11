@@ -21,22 +21,4 @@ public record WGRunnable(BukkitRunnable runnable, long delay) {
 
         return null;
     }
-
-    public Object getMainWorldBorderStartSize() {
-        if (runnable instanceof WGBorderGrower) return ((WGBorderGrower) runnable).getMainWorldBorderStartSize();
-
-        return null;
-    }
-
-    public Object getSpawn(String worldName) {
-        if (runnable instanceof WGBorderGrower) return ((WGBorderGrower) runnable).getSpawn(worldName);
-
-        return null;
-    }
-
-    public String getMainWorldName() {
-        if (runnable instanceof WGBorderGrower) return ((WGBorderGrower) runnable).getMainWorldName();
-
-        return null;
-    }
 }

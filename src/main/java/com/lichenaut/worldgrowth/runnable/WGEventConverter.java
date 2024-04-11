@@ -10,26 +10,28 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
-public class WGEventCounter extends BukkitRunnable {
+public class WGEventConverter extends BukkitRunnable {
 
     private final Main main;
 
     @Override
     public void run() {
+        boolean willTopMaxGrowthPerHour = main.getWorldMath().willTopMaxGrowthPerHour();
         Set<WGPointEvent<?>> pointEvents = main.getPointEvents();
-        CompletableFuture<Void> future = CompletableFuture.completedFuture(null);
+        CompletableFuture<Void> conversionProcess = CompletableFuture.completedFuture(null);
         for (WGPointEvent<?> pointEvent : pointEvents) {
-            future = future
+            conversionProcess = conversionProcess
                     .thenAcceptAsync(counted -> {
                         int quota = pointEvent.getQuota();
                         int count = pointEvent.getCount();
                         if (count < quota) return;
 
                         pointEvent.setCount(count % quota);
-                        main.addPoints(count / quota * pointEvent.getPointValue());
+                        //Convert counts to no points when the max block growth per hour is reached.
+                        if (!willTopMaxGrowthPerHour) main.addPoints(count / quota * pointEvent.getPointValue());
             });
         }
-        future.whenComplete((result, e) -> {
+        conversionProcess.whenComplete((result, e) -> {
             if (e != null) {
                 Logger logging = main.getLogging();
                 logging.error("Error while converting event counts to points!");

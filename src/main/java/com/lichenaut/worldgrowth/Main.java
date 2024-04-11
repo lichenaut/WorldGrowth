@@ -7,13 +7,14 @@ import com.lichenaut.worldgrowth.db.WGMySQLManager;
 import com.lichenaut.worldgrowth.db.WGSQLiteManager;
 import com.lichenaut.worldgrowth.event.WGPointEvent;
 import com.lichenaut.worldgrowth.runnable.WGBorderGrower;
-import com.lichenaut.worldgrowth.runnable.WGEventCounter;
+import com.lichenaut.worldgrowth.runnable.WGEventConverter;
 import com.lichenaut.worldgrowth.runnable.WGHourCounter;
 import com.lichenaut.worldgrowth.runnable.WGRunnableManager;
 import com.lichenaut.worldgrowth.util.WGCopier;
 import com.lichenaut.worldgrowth.util.WGMessager;
 import com.lichenaut.worldgrowth.util.WGRegisterer;
 import com.lichenaut.worldgrowth.util.WGVarDeSerializer;
+import com.lichenaut.worldgrowth.world.WGWorldMath;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
@@ -51,7 +52,6 @@ public final class Main extends JavaPlugin {
     private int borderQuota;
     private int maxBorderQuota;
     private int points;
-    private int borderSize;
     private int blocksGrownThisHour;
     private int boostMultiplier;
     private WGRunnableManager boostManager = new WGRunnableManager(this);
@@ -59,6 +59,8 @@ public final class Main extends JavaPlugin {
     private Configuration configuration;
     private WGDBManager databaseManager;
     private WGVarDeSerializer varDeSerializer;
+    private CompletableFuture<Void> dbProcess = CompletableFuture.completedFuture(null);
+    private WGWorldMath worldMath;
 
     @Override
     public void onEnable() {
@@ -71,8 +73,8 @@ public final class Main extends JavaPlugin {
 
         reloadWG();
 
-        CompletableFuture
-                .runAsync(() -> {
+        dbProcess = dbProcess
+                .thenAcceptAsync(setup -> {
                     try {
                         varDeSerializer.deserializeVariablesExceptCount();
                         databaseManager.deserializeRunnableQueue(hourMaxManager, "SELECT `delay` FROM `hours`", "hours");
@@ -83,7 +85,7 @@ public final class Main extends JavaPlugin {
                 })
                 .thenAcceptAsync(registered -> { //Managers shouldn't run into each other... unless server ticks fall behind enough? Is that how that works?
                     if (hourMaxManager.getRunnableQueue().isEmpty()) hourMaxManager.addRunnable(new WGHourCounter(this), 0L);
-                    eventCounterManager.addRunnable(new WGEventCounter(this), 200L);
+                    eventCounterManager.addRunnable(new WGEventConverter(this), 200L);
                     borderManager.addRunnable(new WGBorderGrower(this), 400L);
                 })
                 .thenAcceptAsync(queued -> logging.info("Plugin up and running."))
@@ -109,6 +111,7 @@ public final class Main extends JavaPlugin {
         }
 
         maxBorderQuota = configuration.getInt("max-growth-quota");
+        worldMath = new WGWorldMath(this, configuration);
 
         String localesFolderString = getDataFolder().getPath() + separator + "locales";
         try {
@@ -153,8 +156,8 @@ public final class Main extends JavaPlugin {
         }
 
         varDeSerializer = new WGVarDeSerializer(this, pointEvents, eventCounterManager, databaseManager);
-        CompletableFuture
-                .runAsync(() -> databaseManager.initializeDataSource(finalUrl, user, password, maxPoolSize))
+        dbProcess = dbProcess
+                .thenAcceptAsync(start -> databaseManager.initializeDataSource(finalUrl, user, password, maxPoolSize))
                 .thenAcceptAsync(connected -> {
                     try {
                         databaseManager.createStructure();

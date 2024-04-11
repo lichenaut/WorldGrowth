@@ -52,7 +52,7 @@ public class WGMySQLManager implements WGDBManager {
             try (Statement statement = connection.createStatement()) {
                 statement.execute("CREATE TABLE IF NOT EXISTS `boosts` (`position` int NOT NULL AUTO_INCREMENT PRIMARY KEY, `multiplier` int NOT NULL, `delay` int NOT NULL)");
                 statement.execute("CREATE TABLE IF NOT EXISTS `events` (`type` varchar(30) NOT NULL PRIMARY KEY, `count` int NOT NULL)");
-                statement.execute("CREATE TABLE IF NOT EXISTS `global` (`quota` int NOT NULL PRIMARY KEY, `points` int NOT NULL, `size` int NOT NULL)");
+                statement.execute("CREATE TABLE IF NOT EXISTS `global` (`quota` int NOT NULL PRIMARY KEY, `points` int NOT NULL)");
                 statement.execute("CREATE TABLE IF NOT EXISTS `hours` (`position` int NOT NULL AUTO_INCREMENT PRIMARY KEY, `delay` int NOT NULL)");
             }
         }
@@ -117,32 +117,14 @@ public class WGMySQLManager implements WGDBManager {
     }
 
     @Override
-    public int getSize() throws SQLException {
-        try (Connection connection = dataSource.getConnection()) {
-            try (ResultSet resultSet = connection.createStatement().executeQuery(
-                    "SELECT `size` FROM `global`")) {
-                if (resultSet.next()) {
-                    return resultSet.getInt("size");
-                } else {
-                    Object size = main.getBorderManager().getRunnableQueue().get(0).getMainWorldBorderStartSize();
-                    assert size != null;
-                    return (int) size;
-                }
-            }
-        }
-    }
-
-    @Override
-    public void setGlobal(int quota, int points, int size) throws SQLException {
+    public void setGlobal(int quota, int points) throws SQLException {
         try (Connection connection = dataSource.getConnection()) {
             try (PreparedStatement statement = connection.prepareStatement(
-                    "INSERT INTO `global` (`quota`, `points`, `size`) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE `quota` = ?, `points` = ?, `size` = ?")) {
+                    "INSERT INTO `global` (`quota`, `points`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `quota` = ?, `points` = ?")) {
                 statement.setInt(1, quota);
                 statement.setInt(2, points);
-                statement.setInt(3, size);
-                statement.setInt(4, quota);
-                statement.setInt(5, points);
-                statement.setInt(6, size);
+                statement.setInt(3, quota);
+                statement.setInt(4, points);
                 statement.executeUpdate();
             }
         }
