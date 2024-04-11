@@ -11,7 +11,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import javax.annotation.Nonnull;
-import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
 public class WGCommand implements CommandExecutor {
@@ -78,15 +77,13 @@ public class WGCommand implements CommandExecutor {
                 boosterManager.addRunnable(new WGBoost(main, multiplierInt) {
                     @Override
                     public void run() {
-                        CompletableFuture
-                                .runAsync(() -> runBoost(delay));
+                        runBoost(delay);
                     }
                 }, 0L);
                 boosterManager.addRunnable(new WGBoost(main, 1) {
                     @Override
                     public void run() {
-                        CompletableFuture
-                                .runAsync(this::runReset);
+                        runReset();
                     }
                 }, delay);
                 return true;

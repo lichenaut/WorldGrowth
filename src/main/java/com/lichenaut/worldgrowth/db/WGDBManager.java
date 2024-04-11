@@ -24,5 +24,5 @@ public interface WGDBManager {
 
     void serializeRunnableQueue(WGRunnableManager runnableManager, String statementString) throws SQLException;
 
-    void deserializeRunnableQueue(WGRunnableManager runnableManager, String statementString, String tableName) throws SQLException;
+    void deserializeRunnableQueue(WGRunnableManager runnableManager, String statementString) throws SQLException;
 }

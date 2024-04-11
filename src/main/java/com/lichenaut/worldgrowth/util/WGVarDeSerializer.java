@@ -30,12 +30,14 @@ public class WGVarDeSerializer {
     public void serializeVariables() throws SQLException {
         try {
             eventCounterManager.getRunnableQueue().get(0).cancel();
-        } catch (IllegalStateException ignore) {}
+        } catch (Exception ignore) {}
+        finally {
+            eventCounterManager.getRunnableQueue().clear();
+            new WGEventConverter(main).run();
 
-        eventCounterManager.getRunnableQueue().clear();
-        new WGEventConverter(main).run();
-
-        for (WGPointEvent<?> event : pointEvents) databaseManager.setEventCount(event.getClass().getSimpleName(), event.getCount());
-        databaseManager.setGlobal(main.getBorderQuota(), main.getPoints());
+            //TODO: don't store if event count is 0
+            for (WGPointEvent<?> event : pointEvents) databaseManager.setEventCount(event.getClass().getSimpleName(), event.getCount());
+            databaseManager.setGlobal(main.getBorderQuota(), main.getPoints());
+        }
     }
 }

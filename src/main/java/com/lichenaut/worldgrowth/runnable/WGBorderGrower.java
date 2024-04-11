@@ -12,7 +12,7 @@ public class WGBorderGrower extends BukkitRunnable {
     private final Main main;
 
     @Override
-    public void run() { //TODO: async
+    public void run() {
         /*if (main.getWorldMath().willTopMaxGrowthPerHour()) return;
 
         int points = main.getPoints();

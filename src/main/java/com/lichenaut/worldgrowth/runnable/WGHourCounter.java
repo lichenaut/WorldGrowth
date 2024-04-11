@@ -5,8 +5,6 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.concurrent.CompletableFuture;
-
 @Getter
 @RequiredArgsConstructor
 public class WGHourCounter extends BukkitRunnable {
@@ -16,10 +14,8 @@ public class WGHourCounter extends BukkitRunnable {
 
     @Override
     public void run() {
-        CompletableFuture.runAsync(() -> {
-            timeStarted = System.currentTimeMillis();
-            main.setBlocksGrownThisHour(0);
-            main.getHourMaxManager().addRunnable(this, 72000L);
-        });
+        timeStarted = System.currentTimeMillis();
+        main.setBlocksGrownThisHour(0);
+        main.getHourMaxManager().addRunnable(this, 72000L);
     }
 }

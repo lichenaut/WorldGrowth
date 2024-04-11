@@ -74,21 +74,20 @@ public final class Main extends JavaPlugin {
         reloadWG();
 
         dbProcess = dbProcess
-                .thenAcceptAsync(setup -> {
+                .thenAcceptAsync(registered -> {
                     try {
                         varDeSerializer.deserializeVariablesExceptCount();
-                        databaseManager.deserializeRunnableQueue(hourMaxManager, "SELECT `delay` FROM `hours`", "hours");
-                        databaseManager.deserializeRunnableQueue(boostManager, "SELECT `multiplier`, `delay` FROM `boosts`", "boosts");
+                        databaseManager.deserializeRunnableQueue(hourMaxManager, "SELECT `delay` FROM `hour`");
+                        databaseManager.deserializeRunnableQueue(boostManager, "SELECT `multiplier`, `delay` FROM `boosts`");
                     } catch (SQLException e) {
                         throw new RuntimeException(e);
                     }
                 })
-                .thenAcceptAsync(registered -> { //Managers shouldn't run into each other... unless server ticks fall behind enough? Is that how that works?
+                .thenAcceptAsync(deserialized -> {
                     if (hourMaxManager.getRunnableQueue().isEmpty()) hourMaxManager.addRunnable(new WGHourCounter(this), 0L);
                     eventCounterManager.addRunnable(new WGEventConverter(this), 200L);
                     borderManager.addRunnable(new WGBorderGrower(this), 400L);
                 })
-                .thenAcceptAsync(queued -> logging.info("Plugin up and running."))
                 .exceptionallyAsync(e -> {
                     logging.error("Error during the database deserializing and queuing process!");
                     logging.error(e);
@@ -99,8 +98,6 @@ public final class Main extends JavaPlugin {
 
     public void reloadWG() {
         HandlerList.unregisterAll(this);
-        wgCommand.setExecutor(null);
-        wgCommand.setTabCompleter(null);
         pointEvents.clear();
 
         reloadConfig();
@@ -110,8 +107,8 @@ public final class Main extends JavaPlugin {
             disablePlugin();
         }
 
-        maxBorderQuota = configuration.getInt("max-growth-quota");
         worldMath = new WGWorldMath(this, configuration);
+        maxBorderQuota = configuration.getInt("max-growth-quota");
 
         String localesFolderString = getDataFolder().getPath() + separator + "locales";
         try {
@@ -157,7 +154,7 @@ public final class Main extends JavaPlugin {
 
         varDeSerializer = new WGVarDeSerializer(this, pointEvents, eventCounterManager, databaseManager);
         dbProcess = dbProcess
-                .thenAcceptAsync(start -> databaseManager.initializeDataSource(finalUrl, user, password, maxPoolSize))
+                .thenAcceptAsync(reStart -> databaseManager.initializeDataSource(finalUrl, user, password, maxPoolSize))
                 .thenAcceptAsync(connected -> {
                     try {
                         databaseManager.createStructure();
@@ -172,7 +169,6 @@ public final class Main extends JavaPlugin {
                         throw new RuntimeException(e);
                     }
                 })
-                .thenAcceptAsync(registered -> logging.info("Database connection up and running."))
                 .exceptionallyAsync(e -> {
                     logging.error("Error during the database connecting, structuring, and registering process!");
                     logging.error(e);
@@ -185,10 +181,16 @@ public final class Main extends JavaPlugin {
     public void onDisable() {
         if (databaseManager == null) return;
 
-        CompletableFuture
-                .runAsync(() -> {
+        dbProcess = dbProcess
+                .thenAcceptAsync(setup -> {
                     try {
+                        System.out.println("1");
                         varDeSerializer.serializeVariables();
+                        System.out.println("2");
+                        databaseManager.serializeRunnableQueue(hourMaxManager, "INSERT INTO `hour` (`delay`) VALUES (?)");
+                        System.out.println("3");
+                        databaseManager.serializeRunnableQueue(boostManager, "INSERT INTO `boosts` (`multiplier`, `delay`) VALUES (?, ?)");
+                        System.out.println("4");
                     } catch (SQLException e) {
                         throw new RuntimeException(e);
                     } finally {

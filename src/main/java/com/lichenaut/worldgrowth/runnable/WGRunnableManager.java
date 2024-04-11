@@ -7,10 +7,12 @@ import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.LinkedList;
+import java.util.concurrent.CompletableFuture;
 
 @Getter
 public class WGRunnableManager {
 
+    private static CompletableFuture<Void> runnableProcess = CompletableFuture.completedFuture(null);
     private final Main main;
     private final BukkitScheduler scheduler;
     private final LinkedList<WGRunnable> runnableQueue = new LinkedList<>();
@@ -32,7 +34,8 @@ public class WGRunnableManager {
 
         currentTask = scheduler.runTaskLater(main, () -> {
             try {
-                runnable.run();
+                runnableProcess = runnableProcess
+                        .thenAcceptAsync(ran -> runnable.run());
             } finally {
                 currentTask = null;
                 runnableQueue.pop();
