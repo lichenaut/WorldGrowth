@@ -2,9 +2,9 @@ package com.lichenaut.worldgrowth.db;
 
 import com.lichenaut.worldgrowth.Main;
 import com.lichenaut.worldgrowth.runnable.WGBoost;
+import com.lichenaut.worldgrowth.runnable.WGHourCounter;
 import com.lichenaut.worldgrowth.runnable.WGRunnable;
 import com.lichenaut.worldgrowth.runnable.WGRunnableManager;
-import com.lichenaut.worldgrowth.util.WGMessager;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.configuration.Configuration;
@@ -12,13 +12,13 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.sql.*;
 import java.util.LinkedList;
+import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
 public class WGMySQLManager implements WGDBManager {
 
     private final Main main;
     private final Configuration configuration;
-    private final WGMessager messager;
     private HikariDataSource dataSource;
 
     @Override
@@ -52,8 +52,8 @@ public class WGMySQLManager implements WGDBManager {
             try (Statement statement = connection.createStatement()) {
                 statement.execute("CREATE TABLE IF NOT EXISTS `boosts` (`position` int NOT NULL AUTO_INCREMENT PRIMARY KEY, `multiplier` int NOT NULL, `delay` int NOT NULL)");
                 statement.execute("CREATE TABLE IF NOT EXISTS `events` (`type` varchar(30) NOT NULL PRIMARY KEY, `count` int NOT NULL)");
-                statement.execute("CREATE TABLE IF NOT EXISTS `global` (`quota` int NOT NULL PRIMARY KEY, `points` int NOT NULL, `size` int NOT NULL, `center` varchar(50) NOT NULL");
-                //TODO: add size and center support. optimize center size
+                statement.execute("CREATE TABLE IF NOT EXISTS `global` (`quota` int NOT NULL PRIMARY KEY, `points` int NOT NULL, `size` int NOT NULL)");
+                statement.execute("CREATE TABLE IF NOT EXISTS `hours` (`position` int NOT NULL AUTO_INCREMENT PRIMARY KEY, `delay` int NOT NULL)");
             }
         }
     }
@@ -96,7 +96,7 @@ public class WGMySQLManager implements WGDBManager {
                 if (resultSet.next()) {
                     return resultSet.getInt("quota");
                 } else {
-                    return configuration.getInt("starting-growth-quota"); //TODO: change the way this is retrieved once more is done.
+                    return configuration.getInt("starting-growth-quota"); //TODO: change the way this is retrieved once more is done?
                 }
             }
         }
@@ -117,26 +117,32 @@ public class WGMySQLManager implements WGDBManager {
     }
 
     @Override
-    public void addPoints(int points) throws SQLException {
+    public int getSize() throws SQLException {
         try (Connection connection = dataSource.getConnection()) {
-            try (PreparedStatement statement = connection.prepareStatement(
-                    "INSERT INTO `global` (`quota`, `points`) VALUES (0, ?) ON DUPLICATE KEY UPDATE `points` = `points` + ?")) {
-                statement.setInt(1, points);
-                statement.setInt(2, points);
-                statement.executeUpdate();
+            try (ResultSet resultSet = connection.createStatement().executeQuery(
+                    "SELECT `size` FROM `global`")) {
+                if (resultSet.next()) {
+                    return resultSet.getInt("size");
+                } else {
+                    Object size = main.getBorderManager().getRunnableQueue().get(0).getMainWorldBorderStartSize();
+                    assert size != null;
+                    return (int) size;
+                }
             }
         }
     }
 
     @Override
-    public void setGlobal(int quota, int points) throws SQLException {
+    public void setGlobal(int quota, int points, int size) throws SQLException {
         try (Connection connection = dataSource.getConnection()) {
             try (PreparedStatement statement = connection.prepareStatement(
-                    "INSERT INTO `global` (`quota`, `points`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `quota` = ?, `points` = ?")) {
+                    "INSERT INTO `global` (`quota`, `points`, `size`) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE `quota` = ?, `points` = ?, `size` = ?")) {
                 statement.setInt(1, quota);
                 statement.setInt(2, points);
-                statement.setInt(3, quota);
-                statement.setInt(4, points);
+                statement.setInt(3, size);
+                statement.setInt(4, quota);
+                statement.setInt(5, points);
+                statement.setInt(6, size);
                 statement.executeUpdate();
             }
         }
@@ -154,6 +160,7 @@ public class WGMySQLManager implements WGDBManager {
                 if (firstRunnable instanceof WGBoost) {
                     for (int i = 0; i < runnableQueue.size(); i++) {
                         WGRunnable runnable = runnableQueue.get(i);
+
                         Object multiplier = runnable.getMultiplier();
                         assert multiplier != null;
                         statement.setInt(1, (Integer) multiplier);
@@ -168,7 +175,21 @@ public class WGMySQLManager implements WGDBManager {
 
                         statement.addBatch();
                     }
-                } //Add checks for other types of runnables here. Convert if to switch-case statement if there are more than 2 cases.
+                } else if (firstRunnable instanceof WGHourCounter) {
+                    for (int i = 0; i < runnableQueue.size(); i++) {
+                        WGRunnable runnable = runnableQueue.get(i);
+
+                        long delay = runnable.delay();
+                        if (i == 0) { //Shorten the duration of the timer.
+                            Object timeStarted = runnable.getTimeStarted();
+                            assert timeStarted != null;
+                            delay -= (System.currentTimeMillis() - (Long) runnable.getTimeStarted());
+                        }
+                        statement.setLong(1, delay);
+
+                        statement.addBatch();
+                    }
+                }
 
                 statement.executeBatch();
             }
@@ -187,16 +208,23 @@ public class WGMySQLManager implements WGDBManager {
                         runnableManager.addRunnable(new WGBoost(main, multiplier) {
                             @Override
                             public void run() {
-                                runBoost(delay);
+                                CompletableFuture
+                                        .runAsync(() -> runBoost(delay));
                             }
                         }, 0L);
                         runnableManager.addRunnable(new WGBoost(main, 1) {
                             @Override
                             public void run() {
-                                runReset();
+                                CompletableFuture
+                                        .runAsync(this::runReset);
                             }
                         }, delay);
-                    } //Add checks for other types of runnables here. Convert if to switch-case statement if there are more than 2 cases.
+                    }
+                } else if (tableName.equals("hours")) {
+                    if (resultSet.next()) {
+                        long delay = resultSet.getLong("delay");
+                        runnableManager.addRunnable(new WGHourCounter(main), delay);
+                    }
                 }
             }
         }

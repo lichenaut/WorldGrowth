@@ -55,6 +55,7 @@ max-block-growth-per-hour: 96
 #If true, WorldGrowth will attempt to find a biome of this type from (0, 0). If it fails, it will use the default world spawn. TODO
   #Biome list: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/block/Biome.html
 starting-biome: "FLOWER_FOREST"
+  #Sets spawn location to the center of the world border. TODO
 
 #If uncommented, WorldGrowth will use these coordinates as the starting point instead of searching for a biome. TODO
 starting-coords: #"0 0"

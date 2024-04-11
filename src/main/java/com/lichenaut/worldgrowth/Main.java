@@ -8,6 +8,7 @@ import com.lichenaut.worldgrowth.db.WGSQLiteManager;
 import com.lichenaut.worldgrowth.event.WGPointEvent;
 import com.lichenaut.worldgrowth.runnable.WGBorderGrower;
 import com.lichenaut.worldgrowth.runnable.WGEventCounter;
+import com.lichenaut.worldgrowth.runnable.WGHourCounter;
 import com.lichenaut.worldgrowth.runnable.WGRunnableManager;
 import com.lichenaut.worldgrowth.util.WGCopier;
 import com.lichenaut.worldgrowth.util.WGMessager;
@@ -44,14 +45,14 @@ public final class Main extends JavaPlugin {
     private final String separator = FileSystems.getDefault().getSeparator();
     private final WGMessager messager = new WGMessager(this);
     private final WGRunnableManager eventCounterManager = new WGRunnableManager(this);
-    private WGRunnableManager growthCounterManager = new WGRunnableManager(this);
+    private final WGRunnableManager hourMaxManager = new WGRunnableManager(this);
     private final WGRunnableManager borderManager = new WGRunnableManager(this);
     private final Set<WGPointEvent<?>> pointEvents = new HashSet<>();
     private int borderQuota;
     private int maxBorderQuota;
     private int points;
     private int borderSize;
-    private int blocksGrownThisHour; //TODO: manager resets this value every hour
+    private int blocksGrownThisHour;
     private int boostMultiplier;
     private WGRunnableManager boostManager = new WGRunnableManager(this);
     private PluginCommand wgCommand;
@@ -62,10 +63,36 @@ public final class Main extends JavaPlugin {
     @Override
     public void onEnable() {
         new MetricsLite(this, 21539);
+
         wgCommand = Objects.requireNonNull(getCommand("wg"));
+
         getConfig().options().copyDefaults();
         saveDefaultConfig();
+
         reloadWG();
+
+        CompletableFuture
+                .runAsync(() -> {
+                    try {
+                        varDeSerializer.deserializeVariablesExceptCount();
+                        databaseManager.deserializeRunnableQueue(hourMaxManager, "SELECT `delay` FROM `hours`", "hours");
+                        databaseManager.deserializeRunnableQueue(boostManager, "SELECT `multiplier`, `delay` FROM `boosts`", "boosts");
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .thenAcceptAsync(registered -> { //Managers shouldn't run into each other... unless server ticks fall behind enough? Is that how that works?
+                    if (hourMaxManager.getRunnableQueue().isEmpty()) hourMaxManager.addRunnable(new WGHourCounter(this), 0L);
+                    eventCounterManager.addRunnable(new WGEventCounter(this), 200L);
+                    borderManager.addRunnable(new WGBorderGrower(this), 400L);
+                })
+                .thenAcceptAsync(queued -> logging.info("Plugin up and running."))
+                .exceptionallyAsync(e -> {
+                    logging.error("Error during the database deserializing and queuing process!");
+                    logging.error(e);
+                    disablePlugin();
+                    return null;
+                });
     }
 
     public void reloadWG() {
@@ -78,8 +105,10 @@ public final class Main extends JavaPlugin {
         configuration = getConfig();
         if (configuration.getBoolean("disable-plugin")) {
             logging.info("Plugin is disabled in config.yml. Disabling WorldGrowth.");
-            pluginManager.disablePlugin(this);
+            disablePlugin();
         }
+
+        maxBorderQuota = configuration.getInt("max-growth-quota");
 
         String localesFolderString = getDataFolder().getPath() + separator + "locales";
         try {
@@ -108,7 +137,7 @@ public final class Main extends JavaPlugin {
         String finalUrl;
         if (url != null && user != null && password != null) {
             logging.info("Database information given in config.yml. Using a remote database.");
-            if (databaseManager == null || databaseManager instanceof WGSQLiteManager) databaseManager = new WGMySQLManager(this, configuration, messager);
+            if (databaseManager == null || databaseManager instanceof WGSQLiteManager) databaseManager = new WGMySQLManager(this, configuration);
             finalUrl = "jdbc:mysql://" + url;
         } else {
             logging.info("Database information not given in config.yml. Using a local database.");
@@ -119,11 +148,11 @@ public final class Main extends JavaPlugin {
                 logging.error("Error while creating local database file!");
                 throw new RuntimeException(e);
             }
-            if (databaseManager == null || databaseManager instanceof WGMySQLManager) databaseManager = new WGSQLiteManager(this, configuration, messager);
+            if (databaseManager == null || databaseManager instanceof WGMySQLManager) databaseManager = new WGSQLiteManager(this, configuration);
             finalUrl = "jdbc:sqlite:" + outFilePath;
         }
 
-        varDeSerializer = new WGVarDeSerializer(this, logging, pointEvents, eventCounterManager, databaseManager);
+        varDeSerializer = new WGVarDeSerializer(this, pointEvents, eventCounterManager, databaseManager);
         CompletableFuture
                 .runAsync(() -> databaseManager.initializeDataSource(finalUrl, user, password, maxPoolSize))
                 .thenAcceptAsync(connected -> {
@@ -134,31 +163,17 @@ public final class Main extends JavaPlugin {
                     }
                 })
                 .thenAcceptAsync(structured -> {
-                    maxBorderQuota = configuration.getInt("max-growth-quota");
-                    try {
-                        varDeSerializer.deserializePointsQuota();
-                        databaseManager.deserializeRunnableQueue(boostManager, "SELECT `multiplier`, `delay` FROM `boosts`", "boosts");
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .thenAcceptAsync(deserialized -> {
                     try {
                         new WGRegisterer(this, configuration, databaseManager, pluginManager, varDeSerializer, pointEvents).registerEvents();
                     } catch (SQLException e) {
                         throw new RuntimeException(e);
                     }
                 })
-                .thenAcceptAsync(registered -> {
-                    eventCounterManager.addRunnable(new WGEventCounter(this), 200L);
-                    WGBorderGrower borderGrower = new WGBorderGrower(this);
-                    borderGrower.buildWorlds();
-                    borderManager.addRunnable(borderGrower, 400L);
-                })
-                .thenAcceptAsync(queued -> logging.info("Database connection up and running."))
+                .thenAcceptAsync(registered -> logging.info("Database connection up and running."))
                 .exceptionallyAsync(e -> {
-                    logging.error("Error during the database connecting, structuring, deserializing, registering, and queueing process!");
+                    logging.error("Error during the database connecting, structuring, and registering process!");
                     logging.error(e);
+                    disablePlugin();
                     return null;
                 });
     }
@@ -167,16 +182,24 @@ public final class Main extends JavaPlugin {
     public void onDisable() {
         if (databaseManager == null) return;
 
-        try {
-            varDeSerializer.serializeCountsQuotaPoints();
-            databaseManager.serializeRunnableQueue(boostManager, "INSERT INTO `boosts` (`multiplier`, `delay`) VALUES (?, ?)");
-        } catch (SQLException e) {
-            logging.error("Error while serializing boost queue!");
-            throw new RuntimeException(e);
-        } finally {
-            databaseManager.closeDataSource();
-        }
+        CompletableFuture
+                .runAsync(() -> {
+                    try {
+                        varDeSerializer.serializeVariables();
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    } finally {
+                        databaseManager.closeDataSource();
+                    }
+                })
+                .exceptionallyAsync(e -> {
+                    logging.error("Error during the database serializing process!");
+                    logging.error(e);
+                    return null;
+                });
     }
+
+    private void disablePlugin() { pluginManager.disablePlugin(this); }
 
     public void addPoints(int pointsToAdd) { points += pointsToAdd; }
 

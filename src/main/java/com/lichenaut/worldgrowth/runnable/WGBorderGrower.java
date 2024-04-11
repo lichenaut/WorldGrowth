@@ -1,7 +1,7 @@
 package com.lichenaut.worldgrowth.runnable;
 
 import com.lichenaut.worldgrowth.Main;
-import lombok.RequiredArgsConstructor;
+import org.bukkit.Location;
 import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.WorldBorder;
@@ -10,17 +10,20 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 record WGWorld(boolean isMain, String name, int startSize, int maxSize, int growthMultiplier) {}
 
-@RequiredArgsConstructor
 public class WGBorderGrower extends BukkitRunnable {
 
     private final Main main;
+    private final Server server;
     private final Set<WGWorld> worlds = new HashSet<>();
 
-    public void buildWorlds() {
+    public WGBorderGrower(Main main) {
+        this.main = main;
+        server = main.getServer();
         ConfigurationSection worldsSection = main.getConfiguration().getConfigurationSection("worlds");
         if (worldsSection == null) throw new IllegalArgumentException("No worlds found in configuration!"); //TODO: test this functionality
 
@@ -55,7 +58,6 @@ public class WGBorderGrower extends BukkitRunnable {
         main.addBlocksGrownThisHour(growthSize);
         main.addBorderQuota(configuration.getInt("increment-growth-quota-by"));
 
-        Server server = main.getServer();
         for (WGWorld wgWorld : worlds) { //TODO: set border properties on startup, not even on reload
             String worldName = wgWorld.name();
             World world = server.getWorld(worldName);
@@ -64,5 +66,17 @@ public class WGBorderGrower extends BukkitRunnable {
             WorldBorder worldBorder = world.getWorldBorder();
             //TODO
         }
+    }
+
+    public int getMainWorldBorderStartSize() {
+        return worlds.stream().filter(WGWorld::isMain).findFirst().orElseThrow().startSize();
+    }
+
+    public Location getSpawn(String worldName) {
+        return Objects.requireNonNull(server.getWorld(worldName)).getSpawnLocation();
+    }
+
+    public String getMainWorldName() {
+        return worlds.stream().filter(WGWorld::isMain).findFirst().orElseThrow().name();
     }
 }

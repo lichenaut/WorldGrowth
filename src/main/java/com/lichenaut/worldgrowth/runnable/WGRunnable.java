@@ -17,6 +17,26 @@ public record WGRunnable(BukkitRunnable runnable, long delay) {
     public Object getTimeStarted() {
         if (runnable instanceof WGBoost) return ((WGBoost) runnable).getTimeStarted();
 
+        if (runnable instanceof WGHourCounter) return ((WGHourCounter) runnable).getTimeStarted();
+
+        return null;
+    }
+
+    public Object getMainWorldBorderStartSize() {
+        if (runnable instanceof WGBorderGrower) return ((WGBorderGrower) runnable).getMainWorldBorderStartSize();
+
+        return null;
+    }
+
+    public Object getSpawn(String worldName) {
+        if (runnable instanceof WGBorderGrower) return ((WGBorderGrower) runnable).getSpawn(worldName);
+
+        return null;
+    }
+
+    public String getMainWorldName() {
+        if (runnable instanceof WGBorderGrower) return ((WGBorderGrower) runnable).getMainWorldName();
+
         return null;
     }
 }

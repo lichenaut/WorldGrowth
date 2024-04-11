@@ -20,9 +20,9 @@ public interface WGDBManager {
 
     int getPoints() throws SQLException;
 
-    void addPoints(int points) throws SQLException;
+    int getSize() throws SQLException;
 
-    void setGlobal(int quota, int points) throws SQLException;
+    void setGlobal(int quota, int points, int size) throws SQLException;
 
     void serializeRunnableQueue(WGRunnableManager runnableManager, String statementString) throws SQLException;
 
