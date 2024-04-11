@@ -14,6 +14,6 @@ public class HopperInventorySearch implements WGPointEvent<HopperInventorySearch
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(HopperInventorySearchEvent event) { count++; }
 }

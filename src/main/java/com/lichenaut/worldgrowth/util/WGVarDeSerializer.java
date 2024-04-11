@@ -35,8 +35,10 @@ public class WGVarDeSerializer {
             eventCounterManager.getRunnableQueue().clear();
             new WGEventConverter(main).run();
 
-            //TODO: don't store if event count is 0
-            for (WGPointEvent<?> event : pointEvents) databaseManager.setEventCount(event.getClass().getSimpleName(), event.getCount());
+            for (WGPointEvent<?> event : pointEvents) {
+                int count = event.getCount();
+                if (count != 0) databaseManager.setEventCount(event.getClass().getSimpleName(), count);
+            }
             databaseManager.setGlobal(main.getBorderQuota(), main.getPoints());
         }
     }

@@ -14,6 +14,6 @@ public class ProjectileHit implements WGPointEvent<ProjectileHitEvent> {
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(ProjectileHitEvent event) { count++; }
 }

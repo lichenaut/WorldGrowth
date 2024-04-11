@@ -14,6 +14,6 @@ public class FluidLevelChange implements WGPointEvent<FluidLevelChangeEvent> {
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(FluidLevelChangeEvent event) { count++; }
 }

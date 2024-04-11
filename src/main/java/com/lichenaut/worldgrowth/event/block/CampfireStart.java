@@ -14,6 +14,6 @@ public class CampfireStart implements WGPointEvent<CampfireStartEvent> {
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(CampfireStartEvent event) { count++; }
 }

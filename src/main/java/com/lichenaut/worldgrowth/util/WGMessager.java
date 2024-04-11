@@ -29,6 +29,7 @@ public class WGMessager {
     private String locale;
     private BaseComponent[] progressCommand1;
     private BaseComponent[] progressCommand2;
+    private BaseComponent[] progressCommand3;
     private BaseComponent[] helpCommand;
     private BaseComponent[] invalidCommand;
     private BaseComponent[] reloadCommand;
@@ -46,6 +47,7 @@ public class WGMessager {
             properties.load(inputStream);
             progressCommand1 = loadMessage("progressCommand1");
             progressCommand2 = loadMessage("progressCommand2");
+            progressCommand3 = loadMessage("progressCommand3");
             helpCommand = loadMessage("helpCommand");
             invalidCommand = loadMessage("invalidCommand");
             reloadCommand = loadMessage("reloadCommand");

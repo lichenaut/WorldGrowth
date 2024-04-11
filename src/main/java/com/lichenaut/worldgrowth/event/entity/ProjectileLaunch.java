@@ -1,13 +1,13 @@
-package com.lichenaut.worldgrowth.event.player;
+package com.lichenaut.worldgrowth.event.entity;
 
 import com.lichenaut.worldgrowth.event.WGPointEvent;
 import lombok.Data;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
-import org.bukkit.event.player.PlayerToggleSneakEvent;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
 
 @Data
-public class PlayerToggleSneak implements WGPointEvent<PlayerToggleSneakEvent> {
+public class ProjectileLaunch implements WGPointEvent<ProjectileLaunchEvent> {
 
     private final int quota;
     private final int pointValue;
@@ -15,5 +15,5 @@ public class PlayerToggleSneak implements WGPointEvent<PlayerToggleSneakEvent> {
 
     @Override
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onEvent(PlayerToggleSneakEvent event) { count++; }
+    public void onEvent(ProjectileLaunchEvent event) { count++; }
 }

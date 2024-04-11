@@ -14,6 +14,6 @@ public class PlayerVelocity implements WGPointEvent<PlayerVelocityEvent> {
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(PlayerVelocityEvent event) { count++; }
 }

@@ -14,6 +14,6 @@ public class FurnaceExtract implements WGPointEvent<FurnaceExtractEvent> {
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(FurnaceExtractEvent event) { count++; }
 }

@@ -14,6 +14,6 @@ public class EntityCombust implements WGPointEvent<EntityCombustEvent> {
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(EntityCombustEvent event) { count++; }
 }

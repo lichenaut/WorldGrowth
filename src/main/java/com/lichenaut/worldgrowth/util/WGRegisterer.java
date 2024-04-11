@@ -313,6 +313,12 @@ public class WGRegisterer {
                         varDeSerializer.deserializeCount(batToggleSleep);
                         pointEvents.add(batToggleSleep);
                         break;
+                    case "creature-spawn":
+                        CreatureSpawn creatureSpawn = new CreatureSpawn(quota, pointValue);
+                        pluginManager.registerEvents(creatureSpawn, main);
+                        varDeSerializer.deserializeCount(creatureSpawn);
+                        pointEvents.add(creatureSpawn);
+                        break;
                     case "creeper-power":
                         CreeperPower creeperPower = new CreeperPower(quota, pointValue);
                         pluginManager.registerEvents(creeperPower, main);
@@ -583,6 +589,12 @@ public class WGRegisterer {
                         varDeSerializer.deserializeCount(itemMerge);
                         pointEvents.add(itemMerge);
                         break;
+                    case "item-spawn":
+                        ItemSpawn itemSpawn = new ItemSpawn(quota, pointValue);
+                        pluginManager.registerEvents(itemSpawn, main);
+                        varDeSerializer.deserializeCount(itemSpawn);
+                        pointEvents.add(itemSpawn);
+                        break;
                     case "lingering-potion-splash":
                         LingeringPotionSplash lingeringPotionSplash = new LingeringPotionSplash(quota, pointValue);
                         pluginManager.registerEvents(lingeringPotionSplash, main);
@@ -625,6 +637,12 @@ public class WGRegisterer {
                         varDeSerializer.deserializeCount(projectileHit);
                         pointEvents.add(projectileHit);
                         break;
+                    case "projectile-launch":
+                        ProjectileLaunch projectileLaunch = new ProjectileLaunch(quota, pointValue);
+                        pluginManager.registerEvents(projectileLaunch, main);
+                        varDeSerializer.deserializeCount(projectileLaunch);
+                        pointEvents.add(projectileLaunch);
+                        break;
                     case "sheep-dye-wool":
                         SheepDyeWool sheepDyeWool = new SheepDyeWool(quota, pointValue);
                         pluginManager.registerEvents(sheepDyeWool, main);
@@ -642,6 +660,12 @@ public class WGRegisterer {
                         pluginManager.registerEvents(slimeSplit, main);
                         varDeSerializer.deserializeCount(slimeSplit);
                         pointEvents.add(slimeSplit);
+                        break;
+                    case "spawner-spawn":
+                        SpawnerSpawn spawnerSpawn = new SpawnerSpawn(quota, pointValue);
+                        pluginManager.registerEvents(spawnerSpawn, main);
+                        varDeSerializer.deserializeCount(spawnerSpawn);
+                        pointEvents.add(spawnerSpawn);
                         break;
                     case "strider-temperature-change":
                         StriderTemperatureChange striderTemperatureChange = new StriderTemperatureChange(quota, pointValue);

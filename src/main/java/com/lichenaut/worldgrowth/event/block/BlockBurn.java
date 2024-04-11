@@ -14,6 +14,6 @@ public class BlockBurn implements WGPointEvent<BlockBurnEvent> {
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(BlockBurnEvent event) { count++; }
 }

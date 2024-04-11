@@ -14,6 +14,6 @@ public class BlockCook implements WGPointEvent<FurnaceSmeltEvent> {
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(FurnaceSmeltEvent event) { count++; }
 }

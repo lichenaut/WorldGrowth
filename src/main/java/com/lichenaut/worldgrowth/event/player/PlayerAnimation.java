@@ -14,6 +14,6 @@ public class PlayerAnimation implements WGPointEvent<PlayerAnimationEvent> {
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(PlayerAnimationEvent event) { count++; }
 }

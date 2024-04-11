@@ -53,7 +53,7 @@ public final class Main extends JavaPlugin {
     private int maxBorderQuota;
     private int points;
     private int blocksGrownThisHour;
-    private int boostMultiplier;
+    private double boostMultiplier;
     private WGRunnableManager boostManager = new WGRunnableManager(this);
     private PluginCommand wgCommand;
     private Configuration configuration;
@@ -184,13 +184,9 @@ public final class Main extends JavaPlugin {
         dbProcess = dbProcess
                 .thenAcceptAsync(setup -> {
                     try {
-                        System.out.println("1");
                         varDeSerializer.serializeVariables();
-                        System.out.println("2");
                         databaseManager.serializeRunnableQueue(hourMaxManager, "INSERT INTO `hour` (`delay`) VALUES (?)");
-                        System.out.println("3");
                         databaseManager.serializeRunnableQueue(boostManager, "INSERT INTO `boosts` (`multiplier`, `delay`) VALUES (?, ?)");
-                        System.out.println("4");
                     } catch (SQLException e) {
                         throw new RuntimeException(e);
                     } finally {

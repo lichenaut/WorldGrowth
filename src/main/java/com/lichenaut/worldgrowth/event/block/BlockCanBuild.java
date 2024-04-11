@@ -14,6 +14,6 @@ public class BlockCanBuild implements WGPointEvent<BlockCanBuildEvent> {
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(BlockCanBuildEvent event) { count++; }
 }

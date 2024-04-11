@@ -14,6 +14,6 @@ public class EntityDropItem implements WGPointEvent<EntityDropItemEvent> {
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(EntityDropItemEvent event) { count++; }
 }

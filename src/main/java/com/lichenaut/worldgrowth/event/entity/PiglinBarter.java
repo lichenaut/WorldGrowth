@@ -14,6 +14,6 @@ public class PiglinBarter implements WGPointEvent<PiglinBarterEvent> {
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(PiglinBarterEvent event) { count++; }
 }

@@ -14,6 +14,6 @@ public class PlayerSwapHandItems implements WGPointEvent<PlayerSwapHandItemsEven
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(PlayerSwapHandItemsEvent event) { count++; }
 }

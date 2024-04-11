@@ -14,6 +14,6 @@ public class PlayerBedEnter implements WGPointEvent<PlayerBedEnterEvent> {
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(PlayerBedEnterEvent event) { count++; }
 }

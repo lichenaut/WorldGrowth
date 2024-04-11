@@ -14,6 +14,6 @@ public class PlayerInteractEntity implements WGPointEvent<PlayerInteractEntityEv
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(PlayerInteractEntityEvent event) { count++; }
 }

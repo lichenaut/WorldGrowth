@@ -14,6 +14,6 @@ public class AreaEffectCloudApply implements WGPointEvent<AreaEffectCloudApplyEv
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(AreaEffectCloudApplyEvent event) { count++; }
 }

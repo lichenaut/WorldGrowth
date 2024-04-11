@@ -14,6 +14,6 @@ public class LeavesDecay implements WGPointEvent<LeavesDecayEvent> {
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(LeavesDecayEvent event) { count++; }
 }

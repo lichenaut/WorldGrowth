@@ -14,6 +14,6 @@ public class BlockRedstone implements WGPointEvent<BlockRedstoneEvent> {
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(BlockRedstoneEvent event) { count++; }
 }

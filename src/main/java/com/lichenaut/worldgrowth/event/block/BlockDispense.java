@@ -14,6 +14,6 @@ public class BlockDispense implements WGPointEvent<BlockDispenseEvent> {
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(BlockDispenseEvent event) { count++; }
 }

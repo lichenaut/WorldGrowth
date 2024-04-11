@@ -39,7 +39,7 @@ public class WGSQLiteManager implements WGDBManager {
     public void createStructure() throws SQLException {
         try (Connection connection = dataSource.getConnection()) {
             try (Statement statement = connection.createStatement()) {
-                statement.execute("CREATE TABLE IF NOT EXISTS boosts (multiplier INTEGER NOT NULL, delay BIGINT NOT NULL)");
+                statement.execute("CREATE TABLE IF NOT EXISTS boosts (multiplier DOUBLE NOT NULL, delay BIGINT NOT NULL)");
                 statement.execute("CREATE TABLE IF NOT EXISTS events (type VARCHAR(30) PRIMARY KEY NOT NULL, count INTEGER NOT NULL)");
                 statement.execute("CREATE TABLE IF NOT EXISTS global (quota INTEGER PRIMARY KEY NOT NULL, points INTEGER NOT NULL)");
                 statement.execute("CREATE TABLE IF NOT EXISTS hour (delay BIGINT NOT NULL)");
@@ -128,21 +128,21 @@ public class WGSQLiteManager implements WGDBManager {
                 BukkitRunnable firstBukkitRunnable = firstRunnable.runnable();
                 if (firstBukkitRunnable instanceof WGHourCounter hourRunnable) {
                     long delay = firstRunnable.delay();
-                    delay -= (System.currentTimeMillis() - hourRunnable.getTimeStarted());
+                    delay -= (System.currentTimeMillis() - hourRunnable.getTimeStarted()) / 50;
 
                     statement.setLong(1, delay);
 
                     statement.addBatch();
-                } else if (firstBukkitRunnable instanceof WGBoost boostRunnable) {
+                } else if (firstBukkitRunnable instanceof WGBoost) {
                     for (int i = 0; i < runnableQueue.size(); i++) {
                         WGRunnable runnable = runnableQueue.get(i);
-
-                        System.out.println("multiplier: " + boostRunnable.getMultiplier());
-                        statement.setInt(1, boostRunnable.getMultiplier());
-
                         long delay = runnable.delay();
-                        if (i == 0) delay -= (System.currentTimeMillis() - boostRunnable.getTimeStarted());
-                        System.out.println("delay: " + delay);
+                        if (delay == 0) continue;
+
+                        WGBoost boostRunnable = (WGBoost) runnable.runnable();
+                        statement.setDouble(1, boostRunnable.getMultiplier());
+
+                        if (i == 0) delay -= (System.currentTimeMillis() - boostRunnable.getTimeStarted()) / 50;
                         statement.setLong(2, delay);
 
                         statement.addBatch();
@@ -167,7 +167,7 @@ public class WGSQLiteManager implements WGDBManager {
                     }
                 } else {
                     while (resultSet.next()) {
-                        int multiplier = resultSet.getInt("multiplier");
+                        double multiplier = resultSet.getDouble("multiplier");
                         long delay = resultSet.getLong("delay");
                         runnableManager.addRunnable(new WGBoost(main, multiplier) {
                             @Override
@@ -175,7 +175,7 @@ public class WGSQLiteManager implements WGDBManager {
                                 runBoost(delay);
                             }
                         }, 0L);
-                        runnableManager.addRunnable(new WGBoost(main, 1) {
+                        runnableManager.addRunnable(new WGBoost(main, multiplier) {
                             @Override
                             public void run() {
                                 runReset();

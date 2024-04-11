@@ -14,6 +14,6 @@ public class PigZombieAnger implements WGPointEvent<PigZombieAngerEvent> {
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(PigZombieAngerEvent event) { count++; }
 }

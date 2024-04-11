@@ -66,21 +66,21 @@ public class WGCommand implements CommandExecutor {
                 }
                 String multiplier = strings[1];
                 String ticks = strings[2];
-                if (!multiplier.matches("[0-9]+") || !ticks.matches("[0-9]+")) {
+                if (!multiplier.matches("[0-9]+(\\.[0-9]+)?") || !ticks.matches("[0-9]+")) {
                     messager.sendMsg(commandSender, messager.getUsageBoostCommand());
                     return true;
                 }
 
-                int multiplierInt = Integer.parseInt(multiplier);
+                double multiplierDouble = Integer.parseInt(multiplier);
                 long delay = Integer.parseInt(strings[2]);
                 WGRunnableManager boosterManager = main.getBoostManager();
-                boosterManager.addRunnable(new WGBoost(main, multiplierInt) {
+                boosterManager.addRunnable(new WGBoost(main, multiplierDouble) {
                     @Override
                     public void run() {
                         runBoost(delay);
                     }
                 }, 0L);
-                boosterManager.addRunnable(new WGBoost(main, 1) {
+                boosterManager.addRunnable(new WGBoost(main, multiplierDouble) {
                     @Override
                     public void run() {
                         runReset();

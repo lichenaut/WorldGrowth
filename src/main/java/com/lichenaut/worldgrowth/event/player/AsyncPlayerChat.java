@@ -14,6 +14,6 @@ public class AsyncPlayerChat implements WGPointEvent<AsyncPlayerChatEvent> {
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(AsyncPlayerChatEvent event) { count++; }
 }

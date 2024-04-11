@@ -14,6 +14,6 @@ public class VillagerAcquireTrade implements WGPointEvent<VillagerAcquireTradeEv
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(VillagerAcquireTradeEvent event) { count++; }
 }

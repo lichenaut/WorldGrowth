@@ -10,11 +10,10 @@ import org.bukkit.scheduler.BukkitRunnable;
 public class WGHourCounter extends BukkitRunnable {
 
     private final Main main;
-    private long timeStarted;
+    private final long timeStarted = System.currentTimeMillis();
 
     @Override
     public void run() {
-        timeStarted = System.currentTimeMillis();
         main.setBlocksGrownThisHour(0);
         main.getHourMaxManager().addRunnable(this, 72000L);
     }

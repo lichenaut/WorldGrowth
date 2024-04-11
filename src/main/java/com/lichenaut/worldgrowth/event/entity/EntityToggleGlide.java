@@ -14,6 +14,6 @@ public class EntityToggleGlide implements WGPointEvent<EntityToggleGlideEvent> {
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(EntityToggleGlideEvent event) { count++; }
 }

@@ -32,6 +32,6 @@ public class PlayerStatisticIncrement implements WGPointEvent<PlayerStatisticInc
     }
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(PlayerStatisticIncrementEvent event) { if (statistics.contains(event.getStatistic())) count++; }
 }

@@ -14,6 +14,6 @@ public class EntityExplode implements WGPointEvent<EntityExplodeEvent> {
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(EntityExplodeEvent event) { count++; }
 }

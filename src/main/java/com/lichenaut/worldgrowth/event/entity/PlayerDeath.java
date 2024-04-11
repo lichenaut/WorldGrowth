@@ -14,6 +14,6 @@ public class PlayerDeath implements WGPointEvent<PlayerDeathEvent> {
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(PlayerDeathEvent event) { count++; }
 }

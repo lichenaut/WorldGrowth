@@ -14,6 +14,6 @@ public class TNTPrime implements WGPointEvent<TNTPrimeEvent> {
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(TNTPrimeEvent event) { count++; }
 }

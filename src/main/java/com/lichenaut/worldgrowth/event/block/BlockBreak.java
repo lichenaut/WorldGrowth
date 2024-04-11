@@ -14,6 +14,6 @@ public class BlockBreak implements WGPointEvent<BlockBreakEvent> {
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(BlockBreakEvent event) { count++; }
 }

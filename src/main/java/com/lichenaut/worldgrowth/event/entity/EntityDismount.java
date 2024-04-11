@@ -14,6 +14,6 @@ public class EntityDismount implements WGPointEvent<EntityDismountEvent> {
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(EntityDismountEvent event) { count++; }
 }

@@ -14,6 +14,6 @@ public class EntityDamageByBlock implements WGPointEvent<EntityDamageByBlockEven
     private int count;
 
     @Override
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(EntityDamageByBlockEvent event) { count++; }
 }
