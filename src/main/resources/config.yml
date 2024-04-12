@@ -39,8 +39,8 @@ worlds:
 #The amount of blocks the diameter of the world border will increase by per growth (times the world's growth multiplier).
 growth-size: 4
 
-#The maximum amount of blocks the main world border can grow per hour. Responsible for the world borders of all worlds.
-  #Point gaining turns off when the maximum is reached, and turns back on when the hour is up.
+#The maximum amount of blocks the main world border can grow per hour. Responsible for the world border growth of all worlds.
+  #Events convert to zero points when the maximum is reached.
 max-block-growth-per-hour: 96
 
 #The starting amount of points required to trigger a growth.
@@ -53,15 +53,15 @@ increment-growth-quota-by: 8
 max-growth-quota: 1024
 
 
-#############################
-#Border Unification Settings#
-#############################
+############################
+#Unification Event Settings#
+############################
 
 #If true, online players will be able to vote to, when the point quota for world growth is met:
   #1. Expand the world borders as usual (this is the default vote choice).
   #2. Make the borders of all worlds the size of the largest world border, where points are converted into duration.
 unification-enabled: true
-  #This is mainly to expand the world border of The Nether for temporary structure access.
+  #This is mainly to expand the world border of The Nether for temporary structure access in the early game.
 
 #Each point adds this many ticks to the duration of the unification event.
 ticks-per-point: 1200

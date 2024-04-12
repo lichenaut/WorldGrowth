@@ -69,7 +69,7 @@ public class WGWorldMath {
                     Objects.requireNonNullElseGet(wgWorld.borderCenter(),
                             () -> Objects.requireNonNull(server.getWorld(worldName)).getSpawnLocation()));
 
-            worldBorder.setSize( //Set a world's border to its start size plus the number of growths times the world's growth multiplier.
+            worldBorder.setSize( //Set a world's border to its start size plus (the number of growths times the world's growth multiplier).
                     wgWorld.startSize() +
                             (((main.getBorderQuota() - (double) configuration.getInt("starting-growth-quota")) /
                                     configuration.getInt("increment-growth-quota-by")) *

@@ -45,9 +45,9 @@ public class WGMessager {
         locale = main.getConfiguration().getString("locale");
         try (FileInputStream inputStream = new FileInputStream(new File(localesFolderString, locale + ".properties"))) {
             properties.load(inputStream);
-            progressCommand1 = loadMessage("progressCommand1");
-            progressCommand2 = loadMessage("progressCommand2");
-            progressCommand3 = loadMessage("progressCommand3");
+            progressCommand1 = loadMessage("infoCommand1");
+            progressCommand2 = loadMessage("infoCommand2");
+            progressCommand3 = loadMessage("infoCommand3");
             helpCommand = loadMessage("helpCommand");
             invalidCommand = loadMessage("invalidCommand");
             reloadCommand = loadMessage("reloadCommand");

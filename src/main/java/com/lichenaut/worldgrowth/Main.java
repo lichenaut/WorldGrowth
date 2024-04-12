@@ -48,6 +48,7 @@ public final class Main extends JavaPlugin {
     private final Logger logging = LogManager.getLogger("WorldGrowth");
     private final String separator = FileSystems.getDefault().getSeparator();
     private final WGMessager messager = new WGMessager(this);
+    private final CompletableFuture<Void> mainFuture = CompletableFuture.completedFuture(null);
     private final BukkitScheduler scheduler = Bukkit.getScheduler();
     private final WGRunnableManager eventCounterManager = new WGRunnableManager(this);
     private final WGRunnableManager hourMaxManager = new WGRunnableManager(this);
@@ -63,7 +64,6 @@ public final class Main extends JavaPlugin {
     private Configuration configuration;
     private WGDBManager databaseManager;
     private WGVarDeSerializer varDeSerializer;
-    private CompletableFuture<Void> dbProcess = CompletableFuture.completedFuture(null);
     private WGWorldMath worldMath;
 
     @Override
@@ -80,8 +80,8 @@ public final class Main extends JavaPlugin {
 
         reloadWG();
 
-        dbProcess = dbProcess
-                .thenAcceptAsync(misc -> {
+        mainFuture
+                .thenAcceptAsync(commandsSet -> {
                     try {
                         varDeSerializer.deserializeVariablesExceptCount();
                         databaseManager.deserializeRunnableQueue(hourMaxManager, "SELECT `delay` FROM `hour`");
@@ -90,27 +90,30 @@ public final class Main extends JavaPlugin {
                         throw new RuntimeException(e);
                     }
                 })
+                .exceptionallyAsync(e -> {
+                    logging.error("Error while deserializing information!");
+                    disablePlugin(e);
+                    return null;
+                });
+
+        mainFuture
                 .thenAcceptAsync(deserialized -> {
                     if (hourMaxManager.getRunnableQueue().isEmpty()) hourMaxManager.addRunnable(new WGHourCounter(this), 0L);
                     eventCounterManager.addRunnable(new WGEventConverter(this), 100L);
                     borderManager.addRunnable(new WGBorderGrower(this), 200L);
                 })
                 .exceptionallyAsync(e -> {
-                    logging.error("Error during the deserializing and queueing process!");
-                    logging.error(e);
-                    disablePlugin();
+                    logging.error("Error while queueing runnables!");
+                    disablePlugin(e);
                     return null;
                 });
 
-        if (!this.isEnabled()) return;
-
-        CompletableFuture<Void> worldProcess = dbProcess
-                .thenRun(() -> scheduler.runTask(this, () -> worldMath.setBorders()))
+        mainFuture
+                .thenAcceptAsync(queued -> scheduler.runTask(this, () -> worldMath.setBorders()))
                 .thenAcceptAsync(done -> HandlerList.unregisterAll(kicker))
                 .exceptionallyAsync(e -> {
                     logging.error("Error while setting world borders!");
-                    logging.error(e);
-                    disablePlugin();
+                    disablePlugin(e);
                     return null;
                 });
     }
@@ -126,7 +129,7 @@ public final class Main extends JavaPlugin {
             disablePlugin();
         }
 
-        String localesFolderString = getDataFolder().getPath() + separator + "locales";
+        String localesFolderString = getDataFolder().getPath() + separator + "locales"; //TODO wip async
         try {
             Path localesFolderPath = Path.of(localesFolderString);
             if (!Files.exists(localesFolderPath)) Files.createDirectory(localesFolderPath);
@@ -143,7 +146,7 @@ public final class Main extends JavaPlugin {
             throw new RuntimeException(e);
         }
 
-        String url = configuration.getString("database-url");
+        String url = configuration.getString("database-url"); //TODO wip async
         String user = configuration.getString("database-user");
         String password = configuration.getString("database-password");
         int maxPoolSize = configuration.getInt("database-max-pool-size");
@@ -166,8 +169,16 @@ public final class Main extends JavaPlugin {
         }
 
         varDeSerializer = new WGVarDeSerializer(this, pointEvents, eventCounterManager, databaseManager);
-        dbProcess = dbProcess
-                .thenAcceptAsync(reStart -> databaseManager.initializeDataSource(finalUrl, user, password, maxPoolSize))
+
+        mainFuture
+                .thenAcceptAsync(dbInit -> databaseManager.initializeDataSource(finalUrl, user, password, maxPoolSize))
+                .exceptionallyAsync(e -> {
+                    logging.error("Error while initializing database datasource!");
+                    disablePlugin(e);
+                    return null;
+                });
+
+        mainFuture
                 .thenAcceptAsync(connected -> {
                     try {
                         databaseManager.createStructure();
@@ -175,6 +186,13 @@ public final class Main extends JavaPlugin {
                         throw new RuntimeException(e);
                     }
                 })
+                .exceptionallyAsync(e -> {
+                    logging.error("Error while creating database structure!");
+                    disablePlugin(e);
+                    return null;
+                });
+
+        mainFuture
                 .thenAcceptAsync(structured -> {
                     try {
                         new WGRegisterer(this, configuration, databaseManager, pluginManager, varDeSerializer, pointEvents).registerEvents();
@@ -182,16 +200,31 @@ public final class Main extends JavaPlugin {
                         throw new RuntimeException(e);
                     }
                 })
+                .exceptionallyAsync(e -> {
+                    logging.error("Error while registering events!");
+                    disablePlugin(e);
+                    return null;
+                });
+
+        mainFuture
                 .thenAcceptAsync(registered -> {
                     maxBorderQuota = configuration.getInt("max-growth-quota");
                     worldMath = new WGWorldMath(this, configuration);
+                })
+                .exceptionallyAsync(e -> {
+                    logging.error("Error while setting up world math!");
+                    disablePlugin(e);
+                    return null;
+                });
+
+        mainFuture
+                .thenAcceptAsync(mathReadied -> {
                     wgCommand.setExecutor(new WGCommand(this, messager));
                     wgCommand.setTabCompleter(new WGTabCompleter());
                 })
                 .exceptionallyAsync(e -> {
-                    logging.error("Error during the connecting, structuring, registering, and assigning process!");
-                    logging.error(e);
-                    disablePlugin();
+                    logging.error("Error while setting up plugin command!");
+                    disablePlugin(e);
                     return null;
                 });
     }
@@ -200,7 +233,7 @@ public final class Main extends JavaPlugin {
     public void onDisable() {
         if (databaseManager == null) return;
 
-        dbProcess = dbProcess
+        mainFuture
                 .thenAcceptAsync(queued -> {
                     try {
                         varDeSerializer.serializeVariables();
@@ -220,6 +253,11 @@ public final class Main extends JavaPlugin {
     }
 
     private void disablePlugin() { pluginManager.disablePlugin(this); }
+
+    private void disablePlugin(Object e) {
+        logging.error(e);
+        pluginManager.disablePlugin(this);
+    }
 
     public void addPoints(double pointsToAdd) { points += pointsToAdd; }
 
