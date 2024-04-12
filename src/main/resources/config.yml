@@ -154,10 +154,10 @@ events:
     quota: 32
     points: 1
   bat-toggle-sleep: #Note 1: I'm giving this event a quota out of pity for it lol
-    quota: 256
+    quota: 512
     points: 1
   creature-spawn:
-    quota: 256
+    quota: 1024
     points: 1
   creeper-power:
     quota: 1
@@ -192,7 +192,7 @@ events:
     points: 1
   entity-enter-love-mode:
   entity-exhaustion:
-    quota: 512
+    quota: 1024
     points: 1
   entity-explode:
     quota: 215

@@ -20,6 +20,7 @@ public class WGVarDeSerializer {
 
     public void deserializeVariablesExceptCount() throws SQLException {
         main.setBorderQuota(databaseManager.getQuota());
+        main.setBlocksGrownThisHour(databaseManager.getBlocks());
         main.setPoints(databaseManager.getPoints());
     }
 
@@ -39,7 +40,7 @@ public class WGVarDeSerializer {
                 int count = event.getCount();
                 if (count != 0) databaseManager.setEventCount(event.getClass().getSimpleName(), count);
             }
-            databaseManager.setGlobal(main.getBorderQuota(), main.getPoints());
+            databaseManager.setGlobal(main.getBorderQuota(), main.getPoints(), main.getBlocksGrownThisHour());
         }
     }
 }

@@ -16,11 +16,13 @@ public interface WGDBManager {
 
     void setEventCount(String type, int count) throws SQLException;
 
+    int getBlocks() throws SQLException;
+
     int getQuota() throws SQLException;
 
     double getPoints() throws SQLException;
 
-    void setGlobal(int quota, double points) throws SQLException;
+    void setGlobal(int quota, double points, int blocks) throws SQLException;
 
     void serializeRunnableQueue(WGRunnableManager runnableManager, String statementString) throws SQLException;
 

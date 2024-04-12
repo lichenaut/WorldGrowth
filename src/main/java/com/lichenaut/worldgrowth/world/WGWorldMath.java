@@ -83,21 +83,5 @@ public class WGWorldMath {
                 (configuration.getInt("growth-size") * mainWorld.growthMultiplier()) >
                 main.getConfiguration().getInt("max-block-growth-per-hour");
     }
-
-    public String getMainWorldName() {
-        return mainWorld.name();
-    }
-
-    public int getMainWorldBorderStartSize() {
-        return mainWorld.startSize();
-    }
-
-    public Location getSpawn(String worldName) {
-        return Objects.requireNonNull(server.getWorld(worldName)).getSpawnLocation();
-    }
-
-
 }
 
-
-record WGWorld(boolean isMain, String name, Location borderCenter, int startSize, int maxSize, int growthMultiplier) {}

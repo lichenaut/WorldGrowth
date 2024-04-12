@@ -51,7 +51,7 @@ public class WGMySQLManager implements WGDBManager {
             try (Statement statement = connection.createStatement()) {
                 statement.execute("CREATE TABLE IF NOT EXISTS `boosts` (`multiplier` DOUBLE NOT NULL, `delay` BIGINT NOT NULL)");
                 statement.execute("CREATE TABLE IF NOT EXISTS `events` (`type` VARCHAR(30) NOT NULL PRIMARY KEY, `count` INT NOT NULL)");
-                statement.execute("CREATE TABLE IF NOT EXISTS `global` (`quota` INT NOT NULL PRIMARY KEY, `points` DOUBLE NOT NULL)");
+                statement.execute("CREATE TABLE IF NOT EXISTS `global` (`quota` INT NOT NULL PRIMARY KEY, `points` DOUBLE NOT NULL, `blocks` INT NOT NULL)");
                 statement.execute("CREATE TABLE IF NOT EXISTS `hour` (`delay` BIGINT NOT NULL)");
             }
         }
@@ -116,14 +116,30 @@ public class WGMySQLManager implements WGDBManager {
     }
 
     @Override
-    public void setGlobal(int quota, double points) throws SQLException {
+    public int getBlocks() throws SQLException {
+        try (Connection connection = dataSource.getConnection()) {
+            try (ResultSet resultSet = connection.createStatement().executeQuery(
+                    "SELECT `blocks` FROM `global`")) {
+                if (resultSet.next()) {
+                    return resultSet.getInt("blocks");
+                } else {
+                    return 0;
+                }
+            }
+        }
+    }
+
+    @Override
+    public void setGlobal(int quota, double points, int blocks) throws SQLException {
         try (Connection connection = dataSource.getConnection()) {
             try (PreparedStatement statement = connection.prepareStatement(
-                    "INSERT INTO `global` (`quota`, `points`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `quota` = ?, `points` = ?")) {
+                    "INSERT INTO `global`(`quota`, `points`, `blocks`) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE `quota` = ?, `points` = ?, `blocks` = ?")) {
                 statement.setInt(1, quota);
                 statement.setDouble(2, points);
-                statement.setInt(3, quota);
-                statement.setDouble(4, points);
+                statement.setInt(3, blocks);
+                statement.setInt(4, quota);
+                statement.setDouble(5, points);
+                statement.setInt(6, blocks);
                 statement.executeUpdate();
             }
         }
