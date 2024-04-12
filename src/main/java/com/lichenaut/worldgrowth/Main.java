@@ -51,8 +51,8 @@ public final class Main extends JavaPlugin {
     private final Set<WGPointEvent<?>> pointEvents = new HashSet<>();
     private int borderQuota;
     private int maxBorderQuota;
-    private int points;
     private int blocksGrownThisHour;
+    private double points;
     private double boostMultiplier;
     private WGRunnableManager boostManager = new WGRunnableManager(this);
     private PluginCommand wgCommand;
@@ -74,7 +74,7 @@ public final class Main extends JavaPlugin {
         reloadWG();
 
         dbProcess = dbProcess
-                .thenAcceptAsync(registered -> {
+                .thenAcceptAsync(misc -> {
                     try {
                         varDeSerializer.deserializeVariablesExceptCount();
                         databaseManager.deserializeRunnableQueue(hourMaxManager, "SELECT `delay` FROM `hour`");
@@ -89,11 +89,14 @@ public final class Main extends JavaPlugin {
                     borderManager.addRunnable(new WGBorderGrower(this), 400L);
                 })
                 .exceptionallyAsync(e -> {
-                    logging.error("Error during the database deserializing and queuing process!");
+                    logging.error("Error during the deserializing and queueing process!");
                     logging.error(e);
                     disablePlugin();
                     return null;
                 });
+
+        dbProcess.join();
+        worldMath.setBorders();
     }
 
     public void reloadWG() {
@@ -106,9 +109,6 @@ public final class Main extends JavaPlugin {
             logging.info("Plugin is disabled in config.yml. Disabling WorldGrowth.");
             disablePlugin();
         }
-
-        worldMath = new WGWorldMath(this, configuration);
-        maxBorderQuota = configuration.getInt("max-growth-quota");
 
         String localesFolderString = getDataFolder().getPath() + separator + "locales";
         try {
@@ -126,9 +126,6 @@ public final class Main extends JavaPlugin {
             logging.error("Error while loading locale messages.");
             throw new RuntimeException(e);
         }
-
-        wgCommand.setExecutor(new WGCommand(this, messager));
-        wgCommand.setTabCompleter(new WGTabCompleter());
 
         String url = configuration.getString("database-url");
         String user = configuration.getString("database-user");
@@ -169,8 +166,14 @@ public final class Main extends JavaPlugin {
                         throw new RuntimeException(e);
                     }
                 })
+                .thenAcceptAsync(registered -> {
+                    maxBorderQuota = configuration.getInt("max-growth-quota");
+                    worldMath = new WGWorldMath(this, configuration);
+                    wgCommand.setExecutor(new WGCommand(this, messager));
+                    wgCommand.setTabCompleter(new WGTabCompleter());
+                })
                 .exceptionallyAsync(e -> {
-                    logging.error("Error during the database connecting, structuring, and registering process!");
+                    logging.error("Error during the connecting, structuring, registering, and assigning process!");
                     logging.error(e);
                     disablePlugin();
                     return null;
@@ -182,7 +185,7 @@ public final class Main extends JavaPlugin {
         if (databaseManager == null) return;
 
         dbProcess = dbProcess
-                .thenAcceptAsync(setup -> {
+                .thenAcceptAsync(queued -> {
                     try {
                         varDeSerializer.serializeVariables();
                         databaseManager.serializeRunnableQueue(hourMaxManager, "INSERT INTO `hour` (`delay`) VALUES (?)");
@@ -202,7 +205,7 @@ public final class Main extends JavaPlugin {
 
     private void disablePlugin() { pluginManager.disablePlugin(this); }
 
-    public void addPoints(int pointsToAdd) { points += pointsToAdd; }
+    public void addPoints(double pointsToAdd) { points += pointsToAdd; }
 
     public void addBlocksGrownThisHour(int blocksToAdd) { blocksGrownThisHour += blocksToAdd; }
 

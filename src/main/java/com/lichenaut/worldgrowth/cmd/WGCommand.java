@@ -31,7 +31,7 @@ public class WGCommand implements CommandExecutor {
             case "progress" -> {
                 if (checkDisallowed(commandSender, "worldgrowth.progress")) return true;
 
-                int greenBars = (int) (double) main.getPoints() / main.getBorderQuota() * 33;
+                int greenBars = (int) main.getPoints() / main.getBorderQuota() * 33;
                 int grayBars = 33 - greenBars;
                 StringBuilder progressBar = new StringBuilder("[");
                 progressBar.append("=".repeat(Math.max(0, greenBars)));
@@ -71,7 +71,7 @@ public class WGCommand implements CommandExecutor {
                     return true;
                 }
 
-                double multiplierDouble = Integer.parseInt(multiplier);
+                double multiplierDouble = Double.parseDouble(multiplier);
                 long delay = Integer.parseInt(strings[2]);
                 WGRunnableManager boosterManager = main.getBoostManager();
                 boosterManager.addRunnable(new WGBoost(main, multiplierDouble) {

@@ -18,9 +18,9 @@ public interface WGDBManager {
 
     int getQuota() throws SQLException;
 
-    int getPoints() throws SQLException;
+    double getPoints() throws SQLException;
 
-    void setGlobal(int quota, int points) throws SQLException;
+    void setGlobal(int quota, double points) throws SQLException;
 
     void serializeRunnableQueue(WGRunnableManager runnableManager, String statementString) throws SQLException;
 

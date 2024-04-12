@@ -23,7 +23,7 @@ public class WGEventConverter extends BukkitRunnable {
 
             pointEvent.setCount(count % quota);
             //Convert counts to no points when the max block growth per hour is reached.
-            if (!willTopMaxGrowthPerHour) main.addPoints(count / quota * pointEvent.getPointValue());
+            if (!willTopMaxGrowthPerHour) main.addPoints((double) count / quota * pointEvent.getPointValue() * main.getBoostMultiplier());
         }
 
         main.getEventCounterManager().addRunnable(this, 6000L);

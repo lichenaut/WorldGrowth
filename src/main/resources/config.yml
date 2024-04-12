@@ -8,21 +8,26 @@ disable-plugin: false
 
 #Guide: https://github.com/lichenaut/WorldGrowth/blob/main/README.md#World
 
+#If "border-center" is set, it will become the world's spawn point, and the world border will be centered around it.
+  #If "border-center" is not set, the world's spawn point will be used as the center of the world border.
 worlds:
   world:
     main: true
     name: "world"
-    start-size: 64
+    #border-center: "0 64 0"
+    start-size: 32
     max-size: 16384
     growth-multiplier: 8
   world_nether:
     name: "world_nether"
-    start-size: 8
+    #border-center: "0 64 0"
+    start-size: 4
     max-size: 2048
     growth-multiplier: 1
   world_the_end:
     name: "world_the_end"
-    start-size: 64
+    #border-center: "0 64 0"
+    start-size: 32
     max-size: 16384
     growth-multiplier: 8
 
@@ -34,31 +39,18 @@ worlds:
 #The amount of blocks the diameter of the world border will increase by per growth (times the world's growth multiplier).
 growth-size: 4
 
+#The maximum amount of blocks the main world border can grow per hour. Responsible for the world borders of all worlds.
+  #Point gaining turns off when the maximum is reached, and turns back on when the hour is up.
+max-block-growth-per-hour: 96
+
 #The starting amount of points required to trigger a growth.
-starting-growth-quota: 16
+starting-growth-quota: 8
 
 #The amount of points required to trigger a growth will increase by this amount each growth.
 increment-growth-quota-by: 8
 
 #The maximum amount of points required to trigger a growth.
 max-growth-quota: 1024
-
-
-#####################
-#Main World Settings#
-#####################
-
-#The maximum amount of blocks the main world border can grow per hour. Responsible for the world borders of all worlds. TODO
-  #Point gaining turns off when the maximum is reached, and turns back on when the hour is up. TODO
-max-block-growth-per-hour: 96
-
-#If true, WorldGrowth will attempt to find a biome of this type from (0, 0). If it fails, it will use the default world spawn. TODO
-  #Biome list: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/block/Biome.html
-starting-biome: "FLOWER_FOREST"
-  #Sets spawn location to the center of the world border. TODO
-
-#If uncommented, WorldGrowth will use these coordinates as the starting point instead of searching for a biome. TODO
-starting-coords: #"0 0"
 
 
 ###############
@@ -71,13 +63,6 @@ database-user: #"root"
 database-password: #""
   #https://github.com/brettwooldridge/HikariCP/wiki/About-Pool-Sizing#connections--core_count--2--effective_spindle_count
 database-max-pool-size: 8
-
-#If empty, WorldGrowth will affect all worlds.
-#To disable the plugin completely, scroll to the top of this file and set 'disable-plugin' to true.
-restrict-plugin-to-worlds:
-#  - "world"
-#  - "world_nether"
-#  - "world_the_end"
 
 #Locale for WorldGrowth messages.
   #Rewrite 'en.properties' if your language has not been added yet.

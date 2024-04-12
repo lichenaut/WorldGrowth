@@ -12,7 +12,7 @@ public class WGBorderGrower extends BukkitRunnable {
     private final Main main;
 
     @Override
-    public void run() {
+    public void run() { //TODO: make center of border the intersection of 4 chunks
         /*if (main.getWorldMath().willTopMaxGrowthPerHour()) return;
 
         int points = main.getPoints();
@@ -20,8 +20,9 @@ public class WGBorderGrower extends BukkitRunnable {
         if (points < borderQuota) return;
 
         int growthSize = main.getConfiguration().getInt("growth-size");
-        main.addBlocksGrownThisHour(growthSize);
-        main.addBorderQuota(configuration.getInt("increment-growth-quota-by"));
+        int mainWorldGrowthMultiplier = main.getWorldMath().getMainWorld().growthMultiplier();
+        main.addBlocksGrownThisHour(growthSize * mainWorldGrowthMultiplier);
+        main.addBorderQuota(main.getConfiguration().getInt("increment-growth-quota-by"));
 
         for (WGWorld wgWorld : worlds) { //TODO: set border properties on startup, not even on reload
             String worldName = wgWorld.name();

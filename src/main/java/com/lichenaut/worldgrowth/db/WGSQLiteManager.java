@@ -41,7 +41,7 @@ public class WGSQLiteManager implements WGDBManager {
             try (Statement statement = connection.createStatement()) {
                 statement.execute("CREATE TABLE IF NOT EXISTS boosts (multiplier DOUBLE NOT NULL, delay BIGINT NOT NULL)");
                 statement.execute("CREATE TABLE IF NOT EXISTS events (type VARCHAR(30) PRIMARY KEY NOT NULL, count INTEGER NOT NULL)");
-                statement.execute("CREATE TABLE IF NOT EXISTS global (quota INTEGER PRIMARY KEY NOT NULL, points INTEGER NOT NULL)");
+                statement.execute("CREATE TABLE IF NOT EXISTS global (quota INTEGER PRIMARY KEY NOT NULL, points DOUBLE NOT NULL)");
                 statement.execute("CREATE TABLE IF NOT EXISTS hour (delay BIGINT NOT NULL)");
             }
         }
@@ -91,12 +91,12 @@ public class WGSQLiteManager implements WGDBManager {
     }
 
     @Override
-    public int getPoints() throws SQLException {
+    public double getPoints() throws SQLException {
         try (Connection connection = dataSource.getConnection()) {
             try (ResultSet resultSet = connection.createStatement().executeQuery(
                     "SELECT `points` FROM `global`")) {
                 if (resultSet.next()) {
-                    return resultSet.getInt("points");
+                    return resultSet.getDouble("points");
                 } else {
                     return 0;
                 }
@@ -105,12 +105,12 @@ public class WGSQLiteManager implements WGDBManager {
     }
 
     @Override
-    public void setGlobal(int quota, int points) throws SQLException {
+    public void setGlobal(int quota, double points) throws SQLException {
         try (Connection connection = dataSource.getConnection()) {
             try (PreparedStatement statement = connection.prepareStatement(
                     "INSERT OR REPLACE INTO global (quota, points) VALUES (?, ?)")) {
                 statement.setInt(1, quota);
-                statement.setInt(2, points);
+                statement.setDouble(2, points);
                 statement.executeUpdate();
             }
         }
