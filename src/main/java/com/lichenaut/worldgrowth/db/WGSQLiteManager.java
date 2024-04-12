@@ -41,8 +41,8 @@ public class WGSQLiteManager implements WGDBManager {
             try (Statement statement = connection.createStatement()) {
                 statement.execute("CREATE TABLE IF NOT EXISTS boosts (multiplier DOUBLE NOT NULL, delay BIGINT NOT NULL)");
                 statement.execute("CREATE TABLE IF NOT EXISTS events (type VARCHAR(30) PRIMARY KEY NOT NULL, count INTEGER NOT NULL)");
-                statement.execute("CREATE TABLE IF NOT EXISTS global (quota INTEGER PRIMARY KEY NOT NULL, points DOUBLE NOT NULL)");
-                statement.execute("CREATE TABLE IF NOT EXISTS hour (delay BIGINT NOT NULL, blocks INTEGER NOT NULL)");
+                statement.execute("CREATE TABLE IF NOT EXISTS global (quota INTEGER PRIMARY KEY NOT NULL, points DOUBLE NOT NULL, blocks INTEGER NOT NULL)");
+                statement.execute("CREATE TABLE IF NOT EXISTS hour (delay BIGINT NOT NULL)");
             }
         }
     }
@@ -127,6 +127,15 @@ public class WGSQLiteManager implements WGDBManager {
                 statement.setDouble(2, points);
                 statement.setInt(3, blocks);
                 statement.executeUpdate();
+            }
+        }
+    }
+
+    @Override
+    public void clearGlobal() throws SQLException {
+        try (Connection connection = dataSource.getConnection()) {
+            try (Statement statement = connection.createStatement()) {
+                statement.execute("DELETE FROM global");
             }
         }
     }

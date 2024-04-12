@@ -5,6 +5,7 @@ import com.lichenaut.worldgrowth.cmd.WGTabCompleter;
 import com.lichenaut.worldgrowth.db.WGDBManager;
 import com.lichenaut.worldgrowth.db.WGMySQLManager;
 import com.lichenaut.worldgrowth.db.WGSQLiteManager;
+import com.lichenaut.worldgrowth.event.WGKicker;
 import com.lichenaut.worldgrowth.event.WGPointEvent;
 import com.lichenaut.worldgrowth.runnable.WGBorderGrower;
 import com.lichenaut.worldgrowth.runnable.WGEventConverter;
@@ -20,11 +21,13 @@ import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bstats.bukkit.MetricsLite;
+import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitScheduler;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -41,10 +44,11 @@ import java.util.concurrent.CompletableFuture;
 @SuppressWarnings("unused")
 public final class Main extends JavaPlugin {
 
-    private final Logger logging = LogManager.getLogger("WorldGrowth");
     private final PluginManager pluginManager = getServer().getPluginManager();
+    private final Logger logging = LogManager.getLogger("WorldGrowth");
     private final String separator = FileSystems.getDefault().getSeparator();
     private final WGMessager messager = new WGMessager(this);
+    private final BukkitScheduler scheduler = Bukkit.getScheduler();
     private final WGRunnableManager eventCounterManager = new WGRunnableManager(this);
     private final WGRunnableManager hourMaxManager = new WGRunnableManager(this);
     private final WGRunnableManager borderManager = new WGRunnableManager(this);
@@ -53,7 +57,7 @@ public final class Main extends JavaPlugin {
     private int maxBorderQuota;
     private int blocksGrownThisHour;
     private double points;
-    private double boostMultiplier;
+    private double boostMultiplier = 1.0;
     private WGRunnableManager boostManager = new WGRunnableManager(this);
     private PluginCommand wgCommand;
     private Configuration configuration;
@@ -64,6 +68,9 @@ public final class Main extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        WGKicker kicker = new WGKicker();
+        pluginManager.registerEvents(kicker, this);
+
         new MetricsLite(this, 21539);
 
         wgCommand = Objects.requireNonNull(getCommand("wg"));
@@ -85,8 +92,8 @@ public final class Main extends JavaPlugin {
                 })
                 .thenAcceptAsync(deserialized -> {
                     if (hourMaxManager.getRunnableQueue().isEmpty()) hourMaxManager.addRunnable(new WGHourCounter(this), 0L);
-                    eventCounterManager.addRunnable(new WGEventConverter(this), 200L);
-                    borderManager.addRunnable(new WGBorderGrower(this), 400L);
+                    eventCounterManager.addRunnable(new WGEventConverter(this), 100L);
+                    borderManager.addRunnable(new WGBorderGrower(this), 200L);
                 })
                 .exceptionallyAsync(e -> {
                     logging.error("Error during the deserializing and queueing process!");
@@ -95,8 +102,17 @@ public final class Main extends JavaPlugin {
                     return null;
                 });
 
-        dbProcess.join();
-        worldMath.setBorders();
+        if (!this.isEnabled()) return;
+
+        CompletableFuture<Void> worldProcess = dbProcess
+                .thenRun(() -> scheduler.runTask(this, () -> worldMath.setBorders()))
+                .thenAcceptAsync(done -> HandlerList.unregisterAll(kicker))
+                .exceptionallyAsync(e -> {
+                    logging.error("Error while setting world borders!");
+                    logging.error(e);
+                    disablePlugin();
+                    return null;
+                });
     }
 
     public void reloadWG() {
@@ -206,6 +222,8 @@ public final class Main extends JavaPlugin {
     private void disablePlugin() { pluginManager.disablePlugin(this); }
 
     public void addPoints(double pointsToAdd) { points += pointsToAdd; }
+
+    public void subtractPoints(double pointsToSubtract) { points -= pointsToSubtract; }
 
     public void addBlocksGrownThisHour(int blocksToAdd) { blocksGrownThisHour += blocksToAdd; }
 

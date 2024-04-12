@@ -22,6 +22,7 @@ public class WGVarDeSerializer {
         main.setBorderQuota(databaseManager.getQuota());
         main.setBlocksGrownThisHour(databaseManager.getBlocks());
         main.setPoints(databaseManager.getPoints());
+        databaseManager.clearGlobal();
     }
 
     public void deserializeCount(WGPointEvent<?> event) throws SQLException {

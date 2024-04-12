@@ -12,11 +12,11 @@ import java.util.concurrent.CompletableFuture;
 @Getter
 public class WGRunnableManager {
 
+    private static CompletableFuture<Void> runnableProcess = CompletableFuture.completedFuture(null);
     private final Main main;
     private final BukkitScheduler scheduler;
     private final LinkedList<WGRunnable> runnableQueue = new LinkedList<>();
     private BukkitTask currentTask;
-    private CompletableFuture<Void> runnableProcess = CompletableFuture.completedFuture(null);
 
     public WGRunnableManager(Main main) {
         this.main = main;

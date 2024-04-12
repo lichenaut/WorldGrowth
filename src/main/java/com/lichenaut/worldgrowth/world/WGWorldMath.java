@@ -63,7 +63,7 @@ public class WGWorldMath {
             WorldBorder worldBorder = Objects.requireNonNull(server.getWorld(worldName)).getWorldBorder();
 
             worldBorder.setWarningDistance(0);
-            worldBorder.setWarningTime(-1);
+            worldBorder.setWarningTime(64);
 
             worldBorder.setCenter( //Set a world's border from either config, or the world's spawn location.
                     Objects.requireNonNullElseGet(wgWorld.borderCenter(),
@@ -73,7 +73,7 @@ public class WGWorldMath {
                     wgWorld.startSize() +
                             (((main.getBorderQuota() - (double) configuration.getInt("starting-growth-quota")) /
                                     configuration.getInt("increment-growth-quota-by")) *
-                                    wgWorld.growthMultiplier()));
+                                    wgWorld.growthMultiplier() * configuration.getInt("growth-size")), 0L);
         }
     }
 

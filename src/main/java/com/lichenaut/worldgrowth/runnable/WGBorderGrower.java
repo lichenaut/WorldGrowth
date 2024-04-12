@@ -22,7 +22,6 @@ public class WGBorderGrower extends BukkitRunnable {
 
     @Override
     public void run() {
-        main.getLogging().warn("WGBorderGrower run{}", main.getPoints());
         WGWorldMath worldMath = main.getWorldMath();
         if (worldMath.willTopMaxGrowthPerHour()) return;
 
@@ -31,8 +30,8 @@ public class WGBorderGrower extends BukkitRunnable {
         if (points < borderQuota) return;
 
         int growthSize = main.getConfiguration().getInt("growth-size");
-        int mainWorldGrowthMultiplier = worldMath.getMainWorld().growthMultiplier();
-        main.addBlocksGrownThisHour(growthSize * mainWorldGrowthMultiplier);
+        main.subtractPoints(borderQuota);
+        main.addBlocksGrownThisHour(growthSize * worldMath.getMainWorld().growthMultiplier());
         main.addBorderQuota(main.getConfiguration().getInt("increment-growth-quota-by"));
 
         for (WGWorld wgWorld : worldMath.getWorlds()) {
@@ -40,12 +39,11 @@ public class WGBorderGrower extends BukkitRunnable {
             World world = server.getWorld(worldName);
             if (world == null) throw new IllegalArgumentException("World " + worldName + " not found!");
 
-            main.getLogging().warn("before join");
-            main.getBorderManager().getRunnableProcess().join(); //TODO make runnable process static if this does not work
-            main.getLogging().warn("after join");
-
             WorldBorder worldBorder = world.getWorldBorder();
-            worldBorder.setSize(worldBorder.getSize() + (growthSize * wgWorld.growthMultiplier()));
+            main.getScheduler()
+                    .runTask(main, () ->
+                            worldBorder.setSize(worldBorder.getSize() + (growthSize * wgWorld.growthMultiplier()),
+                                    16L));
         }
 
         main.getEventCounterManager().addRunnable(this, 6000L);

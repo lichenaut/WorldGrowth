@@ -1,12 +1,12 @@
 #Turn WorldGrowth off.
 disable-plugin: false
 
+#Guide: https://github.com/lichenaut/WorldGrowth/blob/main/README.md
+
 
 ################
 #World Settings#
 ################
-
-#Guide: https://github.com/lichenaut/WorldGrowth/blob/main/README.md#World
 
 #If "border-center" is set, it will become the world's spawn point, and the world border will be centered around it.
   #If "border-center" is not set, the world's spawn point will be used as the center of the world border.
@@ -51,6 +51,23 @@ increment-growth-quota-by: 8
 
 #The maximum amount of points required to trigger a growth.
 max-growth-quota: 1024
+
+
+#############################
+#Border Unification Settings#
+#############################
+
+#If true, online players will be able to vote to, when the point quota for world growth is met:
+  #1. Expand the world borders as usual (this is the default vote choice).
+  #2. Make the borders of all worlds the size of the largest world border, where points are converted into duration.
+unification-enabled: true
+  #This is mainly to expand the world border of The Nether for temporary structure access.
+
+#Each point adds this many ticks to the duration of the unification event.
+ticks-per-point: 1200
+
+#The percentage of online players required to vote for the unification event for it to occur.
+voting-threshold: 66.66
 
 
 ###############
@@ -183,7 +200,7 @@ events:
     quota: 16
     points: 1
   entity-death:
-    quota: 32
+    quota: 512
     points: 1
   entity-dismount:
   entity-drop-item:
@@ -271,7 +288,7 @@ events:
     quota: 256
     points: 1
   sheep-regrow-wool:
-    quota: 24
+    quota: 48
     points: 1
   slime-split:
   spawner-spawn:
