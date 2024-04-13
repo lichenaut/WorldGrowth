@@ -5,9 +5,10 @@ import com.lichenaut.worldgrowth.world.WGWorld;
 import com.lichenaut.worldgrowth.world.WGWorldMath;
 import lombok.Getter;
 import org.bukkit.Server;
-import org.bukkit.World;
 import org.bukkit.WorldBorder;
 import org.bukkit.scheduler.BukkitRunnable;
+
+import java.util.Objects;
 
 @Getter
 public class WGBorderGrower extends BukkitRunnable {
@@ -31,19 +32,34 @@ public class WGBorderGrower extends BukkitRunnable {
 
         int growthSize = main.getConfiguration().getInt("growth-size");
         main.subtractPoints(borderQuota);
-        main.addBlocksGrownThisHour(growthSize * worldMath.getMainWorld().growthMultiplier());
-        main.addBorderQuota(main.getConfiguration().getInt("increment-growth-quota-by"));
 
-        for (WGWorld wgWorld : worldMath.getWorlds()) {
-            String worldName = wgWorld.name();
-            World world = server.getWorld(worldName);
-            if (world == null) throw new IllegalArgumentException("World " + worldName + " not found!");
+        if (main.getVoteMath().unificationThresholdMet()) { //Unification event chosen.
+            long delay = borderQuota * main.getConfiguration().getLong("ticks-per-point");
+            WGRunnableManager unificationManager = main.getUnificationManager();
+            unificationManager.addRunnable(new WGUnifier(main) {
+                @Override
+                public void run () {
+                    runUnification(delay, false);
+                }
+            }, 0L);
+            unificationManager.addRunnable(new WGUnifier(main) {
+                @Override
+                public void run () {
+                    runReset();
+                }
+            }, delay);
+        } else { //Usual border growth chosen.
+            main.addBlocksGrownThisHour(growthSize * worldMath.getMainWorld().growthMultiplier());
+            main.addBorderQuota(main.getConfiguration().getInt("increment-growth-quota-by"));
 
-            WorldBorder worldBorder = world.getWorldBorder();
-            main.getScheduler()
-                    .runTask(main, () ->
-                            worldBorder.setSize(worldBorder.getSize() + (growthSize * wgWorld.growthMultiplier()),
-                                    16L));
+            for (WGWorld wgWorld : worldMath.getWorlds()) {
+                WorldBorder worldBorder = Objects.requireNonNull(server.getWorld(wgWorld.name())).getWorldBorder();
+                int newSize = worldMath.getNaturalSize(wgWorld);
+                main.getScheduler()
+                        .runTask(main, () ->
+                                worldBorder.setSize(newSize, //Scale rate of change to size change.
+                                        newSize - (int) worldBorder.getSize() / 2));
+            }
         }
 
         main.getEventCounterManager().addRunnable(this, 6000L);

@@ -1,10 +1,7 @@
 package com.lichenaut.worldgrowth.db;
 
 import com.lichenaut.worldgrowth.Main;
-import com.lichenaut.worldgrowth.runnable.WGBoost;
-import com.lichenaut.worldgrowth.runnable.WGHourCounter;
-import com.lichenaut.worldgrowth.runnable.WGRunnable;
-import com.lichenaut.worldgrowth.runnable.WGRunnableManager;
+import com.lichenaut.worldgrowth.runnable.*;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.configuration.Configuration;
@@ -43,6 +40,7 @@ public class WGSQLiteManager implements WGDBManager {
                 statement.execute("CREATE TABLE IF NOT EXISTS events (type VARCHAR(30) PRIMARY KEY NOT NULL, count INTEGER NOT NULL)");
                 statement.execute("CREATE TABLE IF NOT EXISTS global (quota INTEGER PRIMARY KEY NOT NULL, points DOUBLE NOT NULL, blocks INTEGER NOT NULL)");
                 statement.execute("CREATE TABLE IF NOT EXISTS hour (delay BIGINT NOT NULL)");
+                statement.execute("CREATE TABLE IF NOT EXISTS unifications (delay BIGINT NOT NULL)");
             }
         }
     }
@@ -143,21 +141,13 @@ public class WGSQLiteManager implements WGDBManager {
     @Override
     public void serializeRunnableQueue(WGRunnableManager runnableManager, String statementString) throws SQLException {
         try (Connection connection = dataSource.getConnection()) {
-            try (PreparedStatement statement = connection.prepareStatement(
-                    statementString)) {
+            try (PreparedStatement statement = connection.prepareStatement(statementString)) {
                 LinkedList<WGRunnable> runnableQueue = runnableManager.getRunnableQueue();
                 if (runnableQueue.isEmpty()) return;
 
                 WGRunnable firstRunnable = runnableQueue.get(0);
                 BukkitRunnable firstBukkitRunnable = firstRunnable.runnable();
-                if (firstBukkitRunnable instanceof WGHourCounter hourRunnable) {
-                    long delay = firstRunnable.delay();
-                    delay -= (System.currentTimeMillis() - hourRunnable.getTimeStarted()) / 50;
-
-                    statement.setLong(1, delay);
-
-                    statement.addBatch();
-                } else if (firstBukkitRunnable instanceof WGBoost) {
+                if (firstBukkitRunnable instanceof WGBoost) {
                     for (int i = 0; i < runnableQueue.size(); i++) {
                         WGRunnable runnable = runnableQueue.get(i);
                         long delay = runnable.delay();
@@ -171,6 +161,23 @@ public class WGSQLiteManager implements WGDBManager {
 
                         statement.addBatch();
                     }
+                } else if (firstBukkitRunnable instanceof WGHourCounter) {
+                    long delay = firstRunnable.delay() - ((System.currentTimeMillis() - ((WGHourCounter) firstBukkitRunnable).getTimeStarted()) / 50);
+
+                    statement.setLong(1, delay);
+
+                    statement.addBatch();
+                } else if (firstBukkitRunnable instanceof WGUnifier) {
+                    for (int i = 0; i < runnableQueue.size(); i++) {
+                        WGRunnable runnable = runnableQueue.get(i);
+                        long delay = runnable.delay();
+                        if (delay == 0) continue;
+
+                        if (i == 0) delay -= (System.currentTimeMillis() - ((WGUnifier) runnable.runnable()).getTimeStarted()) / 50;
+                        statement.setLong(1, delay);
+
+                        statement.addBatch();
+                    }
                 }
 
                 statement.executeBatch();
@@ -180,31 +187,52 @@ public class WGSQLiteManager implements WGDBManager {
 
     @Override
     public void deserializeRunnableQueue(WGRunnableManager runnableManager, String statementString) throws SQLException {
-        String tableName = statementString.contains("hour") ? "hour" : "boosts"; //Change this when adding more types.
+        String tableName;
+        if (statementString.contains("hour")) tableName = "hour"; else if (statementString.contains("boosts")) tableName = "boosts"; else tableName = "unifications";
         try (Connection connection = dataSource.getConnection()) {
             try (ResultSet resultSet = connection.createStatement().executeQuery(
                     statementString)) {
-                if (tableName.equals("hour")) {
-                    if (resultSet.next()) {
-                        long delay = resultSet.getLong("delay");
-                        runnableManager.addRunnable(new WGHourCounter(main), delay);
+                switch (tableName) {
+                    case "boosts" -> {
+                        while (resultSet.next()) {
+                            double multiplier = resultSet.getDouble("multiplier");
+                            long delay = resultSet.getLong("delay");
+                            runnableManager.addRunnable(new WGBoost(main, multiplier) {
+                                @Override
+                                public void run() {
+                                    runBoost(delay);
+                                }
+                            }, 0L);
+                            runnableManager.addRunnable(new WGBoost(main, multiplier) {
+                                @Override
+                                public void run() {
+                                    runReset();
+                                }
+                            }, delay);
+                        }
                     }
-                } else {
-                    while (resultSet.next()) {
-                        double multiplier = resultSet.getDouble("multiplier");
-                        long delay = resultSet.getLong("delay");
-                        runnableManager.addRunnable(new WGBoost(main, multiplier) {
-                            @Override
-                            public void run() {
-                                runBoost(delay);
-                            }
-                        }, 0L);
-                        runnableManager.addRunnable(new WGBoost(main, multiplier) {
-                            @Override
-                            public void run() {
-                                runReset();
-                            }
-                        }, delay);
+                    case "hour" -> {
+                        if (resultSet.next()) {
+                            long delay = resultSet.getLong("delay");
+                            runnableManager.addRunnable(new WGHourCounter(main), delay);
+                        }
+                    }
+                    case "unifications" -> {
+                        while (resultSet.next()) {
+                            long delay = resultSet.getLong("delay");
+                            runnableManager.addRunnable(new WGUnifier(main) {
+                                @Override
+                                public void run() {
+                                    runUnification(delay, true);
+                                }
+                            }, 0L);
+                            runnableManager.addRunnable(new WGUnifier(main) {
+                                @Override
+                                public void run() {
+                                    runReset();
+                                }
+                            }, delay);
+                        }
                     }
                 }
             }

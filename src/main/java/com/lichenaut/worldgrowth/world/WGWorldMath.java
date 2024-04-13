@@ -24,9 +24,9 @@ public class WGWorldMath {
     public WGWorldMath(Main main, Configuration configuration) {
         this.main = main;
         this.configuration = configuration;
-        server = main.getServer();
+        this.server = main.getServer();
         ConfigurationSection worldsSection = main.getConfiguration().getConfigurationSection("worlds");
-        if (worldsSection == null) throw new IllegalArgumentException("No worlds found in configuration!"); //TODO: test this functionality
+        if (worldsSection == null) throw new IllegalArgumentException("No worlds found in configuration!");
 
         for (String worldKey : worldsSection.getKeys(false)) {
             ConfigurationSection worldSection = worldsSection.getConfigurationSection(worldKey);
@@ -58,23 +58,27 @@ public class WGWorldMath {
     }
 
     public void setBorders() {
+        if (!main.getUnificationManager().getRunnableQueue().isEmpty()) return;
+
         for (WGWorld wgWorld : worlds) {
             String worldName = wgWorld.name();
             WorldBorder worldBorder = Objects.requireNonNull(server.getWorld(worldName)).getWorldBorder();
 
             worldBorder.setWarningDistance(0);
-            worldBorder.setWarningTime(64);
+            worldBorder.setWarningTime(60);
 
             worldBorder.setCenter( //Set a world's border from either config, or the world's spawn location.
                     Objects.requireNonNullElseGet(wgWorld.borderCenter(),
                             () -> Objects.requireNonNull(server.getWorld(worldName)).getSpawnLocation()));
 
-            worldBorder.setSize( //Set a world's border to its start size plus (the number of growths times the world's growth multiplier).
-                    wgWorld.startSize() +
-                            (((main.getBorderQuota() - (double) configuration.getInt("starting-growth-quota")) /
-                                    configuration.getInt("increment-growth-quota-by")) *
-                                    wgWorld.growthMultiplier() * configuration.getInt("growth-size")), 0L);
+            worldBorder.setSize(getNaturalSize(wgWorld), 0L);
         }
+    }
+
+    public int getNaturalSize(WGWorld wgWorld) {//Get start size plus (the number of growths times the world's growth size).
+        return (int) (wgWorld.startSize() + ((main.getBorderQuota() - (double) configuration.getInt("starting-growth-quota")) /
+                        configuration.getInt("increment-growth-quota-by")) *
+                        configuration.getInt("growth-size") * wgWorld.growthMultiplier());
     }
 
     public boolean willTopMaxGrowthPerHour() {

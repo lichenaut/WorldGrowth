@@ -6,6 +6,7 @@ import com.lichenaut.worldgrowth.db.WGDBManager;
 import com.lichenaut.worldgrowth.db.WGMySQLManager;
 import com.lichenaut.worldgrowth.db.WGSQLiteManager;
 import com.lichenaut.worldgrowth.event.WGKicker;
+import com.lichenaut.worldgrowth.event.WGMocker;
 import com.lichenaut.worldgrowth.event.WGPointEvent;
 import com.lichenaut.worldgrowth.runnable.WGBorderGrower;
 import com.lichenaut.worldgrowth.runnable.WGEventConverter;
@@ -15,6 +16,7 @@ import com.lichenaut.worldgrowth.util.WGCopier;
 import com.lichenaut.worldgrowth.util.WGMessager;
 import com.lichenaut.worldgrowth.util.WGRegisterer;
 import com.lichenaut.worldgrowth.util.WGVarDeSerializer;
+import com.lichenaut.worldgrowth.vote.WGVoteMath;
 import com.lichenaut.worldgrowth.world.WGWorldMath;
 import lombok.Getter;
 import lombok.Setter;
@@ -52,6 +54,7 @@ public final class Main extends JavaPlugin {
     private final WGRunnableManager eventCounterManager = new WGRunnableManager(this);
     private final WGRunnableManager hourMaxManager = new WGRunnableManager(this);
     private final WGRunnableManager borderManager = new WGRunnableManager(this);
+    private final WGRunnableManager unificationManager = new WGRunnableManager(this);
     private final Set<WGPointEvent<?>> pointEvents = new HashSet<>();
     private int borderQuota;
     private int maxBorderQuota;
@@ -65,24 +68,17 @@ public final class Main extends JavaPlugin {
     private WGDBManager databaseManager;
     private WGVarDeSerializer varDeSerializer;
     private WGWorldMath worldMath;
+    private WGVoteMath voteMath;
 
     @Override
     public void onEnable() {
         WGKicker kicker = new WGKicker();
-        wgCommand = Objects.requireNonNull(getCommand("wg"));
+        pluginManager.registerEvents(kicker, this);
 
-        mainFuture = mainFuture
-                .thenAcceptAsync(enabled -> {
-                    pluginManager.registerEvents(kicker, this);
-                    new MetricsLite(this, 21539);
-                    getConfig().options().copyDefaults();
-                    saveDefaultConfig();
-                })
-                .exceptionallyAsync(e -> {
-                    logging.error("Error while setting up!");
-                    disablePlugin(e);
-                    return null;
-                });
+        new MetricsLite(this, 21539);
+
+        getConfig().options().copyDefaults();
+        saveDefaultConfig();
 
         reloadWG();
 
@@ -91,6 +87,7 @@ public final class Main extends JavaPlugin {
                     try {
                         varDeSerializer.deserializeVariablesExceptCount();
                         databaseManager.deserializeRunnableQueue(hourMaxManager, "SELECT `delay` FROM `hour`");
+                        databaseManager.deserializeRunnableQueue(unificationManager, "SELECT `delay` FROM `unifications`");
                         databaseManager.deserializeRunnableQueue(boostManager, "SELECT `multiplier`, `delay` FROM `boosts`");
                     } catch (SQLException e) {
                         throw new RuntimeException(e);
@@ -123,31 +120,26 @@ public final class Main extends JavaPlugin {
                 });
 
         mainFuture = worldFuture //Mainly to have mainFuture reliant on worldFuture's completion.
-                .thenAcceptAsync(bordered -> HandlerList.unregisterAll(kicker))
-                .exceptionallyAsync(e -> {
-                    logging.error("Error while unregistering kicker!");
-                    disablePlugin(e);
-                    return null;
-                });
+                .thenAcceptAsync(bordered -> logging.info("WorldGrowth loaded."));
+
+        HandlerList.unregisterAll(kicker);
+
+        WGMocker mocker = new WGMocker();
+        pluginManager.registerEvents(mocker, this);
+
+        wgCommand = Objects.requireNonNull(getCommand("wg"));
+        voteMath = new WGVoteMath(this);
     }
 
     public void reloadWG() {
         reloadConfig();
         configuration = getConfig();
 
-        mainFuture = mainFuture
-                .thenAcceptAsync(setup -> {
-                    HandlerList.unregisterAll(this);
-                    pointEvents.clear();
-                })
-                .exceptionallyAsync(e -> {
-                    logging.error("Error while cleaning up!");
-                    disablePlugin(e);
-                    return null;
-                });
+        HandlerList.unregisterAll(this);
+        pointEvents.clear();
 
         CompletableFuture<Void> disabledFuture = mainFuture
-                .thenAcceptAsync(cleaned -> scheduler.runTask(this, () -> {
+                .thenAcceptAsync(setup -> scheduler.runTask(this, () -> {
                     if (configuration.getBoolean("disable-plugin")) {
                         logging.info("Plugin disabled in config.yml."); //TODO test this functionality
                         disablePlugin();
@@ -155,7 +147,7 @@ public final class Main extends JavaPlugin {
                 }));
 
         mainFuture = disabledFuture
-                .thenAcceptAsync(enabled -> {
+                .thenAcceptAsync(disabledChecked -> {
                     String localesFolderString = getDataFolder().getPath() + separator + "locales";
                     try {
                         Path localesFolderPath = Path.of(localesFolderString);
@@ -208,8 +200,6 @@ public final class Main extends JavaPlugin {
             finalUrl = "jdbc:sqlite:" + outFilePath;
         }
 
-        varDeSerializer = new WGVarDeSerializer(this, pointEvents, eventCounterManager, databaseManager);
-
         mainFuture = mainFuture
                 .thenAcceptAsync(dbInit -> databaseManager.initializeDataSource(finalUrl, user, password, maxPoolSize))
                 .exceptionallyAsync(e -> {
@@ -231,6 +221,8 @@ public final class Main extends JavaPlugin {
                     disablePlugin(e);
                     return null;
                 });
+
+        varDeSerializer = new WGVarDeSerializer(this, pointEvents, eventCounterManager, databaseManager);
 
         mainFuture = mainFuture
                 .thenAcceptAsync(structured -> {
@@ -270,6 +262,7 @@ public final class Main extends JavaPlugin {
                     try {
                         varDeSerializer.serializeVariables();
                         databaseManager.serializeRunnableQueue(hourMaxManager, "INSERT INTO `hour` (`delay`) VALUES (?)");
+                        databaseManager.serializeRunnableQueue(unificationManager, "INSERT INTO `unifications` (`delay`) VALUES (?)");
                         databaseManager.serializeRunnableQueue(boostManager, "INSERT INTO `boosts` (`multiplier`, `delay`) VALUES (?, ?)");
                     } catch (SQLException e) {
                         throw new RuntimeException(e);

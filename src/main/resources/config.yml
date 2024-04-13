@@ -2,7 +2,7 @@
 disable-plugin: false
 
 #Guide: https://github.com/lichenaut/WorldGrowth/blob/main/README.md
-
+  #Choosing a world seed is recommended, unless you want to risk being trapped in the desert! ;)
 
 ################
 #World Settings#
@@ -22,7 +22,7 @@ worlds:
     name: "world_nether"
     #border-center: "0 64 0"
     start-size: 4
-    max-size: 2048
+    max-size: 16384
     growth-multiplier: 1
   world_the_end:
     name: "world_the_end"
@@ -59,7 +59,7 @@ max-growth-quota: 1024
 
 #If true, online players will be able to vote to, when the point quota for world growth is met:
   #1. Expand the world borders as usual (this is the default vote choice).
-  #2. Make the borders of all worlds the size of the largest world border, where points are converted into duration.
+  #2. Make the borders of all worlds the size of the largest world border (up until their 'max-size's), where points are converted into duration.
 unification-enabled: true
   #This is mainly to expand the world border of The Nether for temporary structure access in the early game.
 

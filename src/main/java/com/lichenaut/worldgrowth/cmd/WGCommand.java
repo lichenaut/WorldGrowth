@@ -16,9 +16,9 @@ import java.util.concurrent.CompletableFuture;
 @RequiredArgsConstructor
 public class WGCommand implements CommandExecutor {
 
+    private static CompletableFuture<Void> commandFuture = CompletableFuture.completedFuture(null);
     private final Main main;
     private final WGMessager messager;
-    private static CompletableFuture<Void> commandFuture = CompletableFuture.completedFuture(null);
 
     @Override
     public boolean onCommand(@Nonnull CommandSender commandSender, @Nonnull Command command, @Nonnull String s, @Nonnull String[] strings) {
@@ -109,6 +109,32 @@ public class WGCommand implements CommandExecutor {
                                 }
                             }, delay);
                         }));
+                return true;
+            }
+            case "vote" -> {
+                if (!(commandSender instanceof Player)) {
+                    //TODO only player msg
+                    return true;
+                }
+
+                if (checkDisallowed(commandSender, "worldgrowth.vote")) return true;
+
+                if (strings.length != 2) {
+                    //TODO invalid msg
+                    return true;
+                }
+
+                //TODO use regex to parse for yes/y or no/n only
+
+                if (strings[1].equalsIgnoreCase("yes") || strings[1].equalsIgnoreCase("y")) {
+                    main.getVoteMath().addVote((Player) commandSender, true);
+                    return true;
+                } else if (strings[1].equalsIgnoreCase("no") || strings[1].equalsIgnoreCase("n")) {
+                    main.getVoteMath().addVote((Player) commandSender, false);
+                    return true;
+                }
+
+                //TODO invalid msg
                 return true;
             }
         }
