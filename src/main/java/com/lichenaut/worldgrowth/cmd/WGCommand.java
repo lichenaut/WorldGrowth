@@ -16,16 +16,16 @@ import java.util.concurrent.CompletableFuture;
 @RequiredArgsConstructor
 public class WGCommand implements CommandExecutor {
 
-    private static final CompletableFuture<Boolean> COMMAND_FUTURE = CompletableFuture.completedFuture(null);
     private final Main main;
     private final WGMessager messager;
+    private static CompletableFuture<Void> commandFuture = CompletableFuture.completedFuture(null);
 
     @Override
     public boolean onCommand(@Nonnull CommandSender commandSender, @Nonnull Command command, @Nonnull String s, @Nonnull String[] strings) {
         if (checkDisallowed(commandSender, "worldgrowth.command")) return true;
 
         if (strings.length == 0) {
-            COMMAND_FUTURE
+            commandFuture = commandFuture
                     .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getInvalidCommand()));
             return true;
         }
@@ -50,7 +50,7 @@ public class WGCommand implements CommandExecutor {
             case "help" -> {
                 if (checkDisallowed(commandSender, "worldgrowth.help")) return true;
 
-                COMMAND_FUTURE
+                commandFuture = commandFuture
                         .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getHelpCommand()));
                 return true;
             }
@@ -59,25 +59,25 @@ public class WGCommand implements CommandExecutor {
 
                 main.reloadWG();
 
-                main.getMainFuture()
-                        .thenAcceptAsync(reloaded -> messager.sendMsg(commandSender, messager.getReloadCommand()));
+                main.setMainFuture(main.getMainFuture()
+                                .thenAcceptAsync(reloaded -> messager.sendMsg(commandSender, messager.getReloadCommand())));
                 return true;
             }
             case "boost" -> {
                 if (commandSender instanceof Player player) {
                     if (player.isOp()) {
-                        COMMAND_FUTURE
+                        commandFuture = commandFuture
                                 .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getOnlyConsoleCommand()));
                     }
                     return true;
                 }
                 if (strings.length != 3) {
-                    COMMAND_FUTURE
+                    commandFuture = commandFuture
                             .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getUsageBoostCommand()));
                     return true;
                 }
 
-                COMMAND_FUTURE
+                commandFuture = commandFuture
                         .thenApplyAsync(processed -> CompletableFuture.supplyAsync(() -> {
                             String multiplier = strings[1];
                             String ticks = strings[2];
@@ -113,7 +113,7 @@ public class WGCommand implements CommandExecutor {
             }
         }
 
-        COMMAND_FUTURE
+        commandFuture = commandFuture
                 .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getInvalidCommand()));
         return true;
     }

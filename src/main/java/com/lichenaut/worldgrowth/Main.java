@@ -48,7 +48,6 @@ public final class Main extends JavaPlugin {
     private final Logger logging = LogManager.getLogger("WorldGrowth");
     private final String separator = FileSystems.getDefault().getSeparator();
     private final WGMessager messager = new WGMessager(this);
-    private final CompletableFuture<Void> mainFuture = CompletableFuture.completedFuture(null);
     private final BukkitScheduler scheduler = Bukkit.getScheduler();
     private final WGRunnableManager eventCounterManager = new WGRunnableManager(this);
     private final WGRunnableManager hourMaxManager = new WGRunnableManager(this);
@@ -62,6 +61,7 @@ public final class Main extends JavaPlugin {
     private WGRunnableManager boostManager = new WGRunnableManager(this);
     private PluginCommand wgCommand;
     private Configuration configuration;
+    private CompletableFuture<Void> mainFuture = CompletableFuture.completedFuture(null);
     private WGDBManager databaseManager;
     private WGVarDeSerializer varDeSerializer;
     private WGWorldMath worldMath;
@@ -69,18 +69,24 @@ public final class Main extends JavaPlugin {
     @Override
     public void onEnable() {
         WGKicker kicker = new WGKicker();
-        pluginManager.registerEvents(kicker, this);
-
-        new MetricsLite(this, 21539);
-
         wgCommand = Objects.requireNonNull(getCommand("wg"));
 
-        getConfig().options().copyDefaults();
-        saveDefaultConfig();
+        mainFuture = mainFuture
+                .thenAcceptAsync(enabled -> {
+                    pluginManager.registerEvents(kicker, this);
+                    new MetricsLite(this, 21539);
+                    getConfig().options().copyDefaults();
+                    saveDefaultConfig();
+                })
+                .exceptionallyAsync(e -> {
+                    logging.error("Error while setting up!");
+                    disablePlugin(e);
+                    return null;
+                });
 
         reloadWG();
 
-        mainFuture
+        mainFuture = mainFuture
                 .thenAcceptAsync(commandsSet -> {
                     try {
                         varDeSerializer.deserializeVariablesExceptCount();
@@ -91,62 +97,87 @@ public final class Main extends JavaPlugin {
                     }
                 })
                 .exceptionallyAsync(e -> {
-                    logging.error("Error while deserializing information!");
+                    logging.error("Error while deserializing variables and runnable queues!");
                     disablePlugin(e);
                     return null;
                 });
 
-        mainFuture
+        mainFuture = mainFuture
                 .thenAcceptAsync(deserialized -> {
                     if (hourMaxManager.getRunnableQueue().isEmpty()) hourMaxManager.addRunnable(new WGHourCounter(this), 0L);
                     eventCounterManager.addRunnable(new WGEventConverter(this), 100L);
                     borderManager.addRunnable(new WGBorderGrower(this), 200L);
                 })
                 .exceptionallyAsync(e -> {
-                    logging.error("Error while queueing runnables!");
+                    logging.error("Error while deserializing!");
                     disablePlugin(e);
                     return null;
                 });
 
-        mainFuture
+        CompletableFuture<Void> worldFuture = mainFuture
                 .thenAcceptAsync(queued -> scheduler.runTask(this, () -> worldMath.setBorders()))
-                .thenAcceptAsync(done -> HandlerList.unregisterAll(kicker))
                 .exceptionallyAsync(e -> {
                     logging.error("Error while setting world borders!");
+                    disablePlugin(e);
+                    return null;
+                });
+
+        mainFuture = worldFuture //Mainly to have mainFuture reliant on worldFuture's completion.
+                .thenAcceptAsync(bordered -> HandlerList.unregisterAll(kicker))
+                .exceptionallyAsync(e -> {
+                    logging.error("Error while unregistering kicker!");
                     disablePlugin(e);
                     return null;
                 });
     }
 
     public void reloadWG() {
-        HandlerList.unregisterAll(this);
-        pointEvents.clear();
-
         reloadConfig();
         configuration = getConfig();
-        if (configuration.getBoolean("disable-plugin")) {
-            logging.info("Plugin is disabled in config.yml. Disabling WorldGrowth.");
-            disablePlugin();
-        }
 
-        String localesFolderString = getDataFolder().getPath() + separator + "locales"; //TODO wip async
-        try {
-            Path localesFolderPath = Path.of(localesFolderString);
-            if (!Files.exists(localesFolderPath)) Files.createDirectory(localesFolderPath);
-            String[] localeFiles = {separator + "de.properties", separator + "en.properties", separator + "es.properties", separator + "fr.properties"};
-            for (String locale : localeFiles) WGCopier.smallCopy(getResource("locales" + locale), localesFolderString + locale);
-        } catch (IOException e) {
-            logging.error("Error while creating locale files.");
-            throw new RuntimeException(e);
-        }
-        try {
-            messager.loadLocaleMessages(localesFolderString);
-        } catch (IOException e) {
-            logging.error("Error while loading locale messages.");
-            throw new RuntimeException(e);
-        }
+        mainFuture = mainFuture
+                .thenAcceptAsync(setup -> {
+                    HandlerList.unregisterAll(this);
+                    pointEvents.clear();
+                })
+                .exceptionallyAsync(e -> {
+                    logging.error("Error while cleaning up!");
+                    disablePlugin(e);
+                    return null;
+                });
 
-        String url = configuration.getString("database-url"); //TODO wip async
+        CompletableFuture<Void> disabledFuture = mainFuture
+                .thenAcceptAsync(cleaned -> scheduler.runTask(this, () -> {
+                    if (configuration.getBoolean("disable-plugin")) {
+                        logging.info("Plugin disabled in config.yml."); //TODO test this functionality
+                        disablePlugin();
+                    }
+                }));
+
+        mainFuture = disabledFuture
+                .thenAcceptAsync(enabled -> {
+                    String localesFolderString = getDataFolder().getPath() + separator + "locales";
+                    try {
+                        Path localesFolderPath = Path.of(localesFolderString);
+                        if (!Files.exists(localesFolderPath)) Files.createDirectory(localesFolderPath);
+                        String[] localeFiles = {separator + "de.properties", separator + "en.properties", separator + "es.properties", separator + "fr.properties"};
+                        for (String locale : localeFiles) WGCopier.smallCopy(getResource("locales" + locale), localesFolderString + locale);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    try {
+                        messager.loadLocaleMessages(localesFolderString);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .exceptionallyAsync(e -> {
+                    logging.error("Error while creating locale files and loading locale messages!");
+                    disablePlugin(e);
+                    return null;
+                });
+
+        String url = configuration.getString("database-url");
         String user = configuration.getString("database-user");
         String password = configuration.getString("database-password");
         int maxPoolSize = configuration.getInt("database-max-pool-size");
@@ -158,27 +189,36 @@ public final class Main extends JavaPlugin {
         } else {
             logging.info("Database information not given in config.yml. Using a local database.");
             String outFilePath = getDataFolder().getPath() + separator + "worldgrowth.db";
-            try {
-                WGCopier.smallCopy(getResource("worldgrowth.db"), outFilePath);
-            } catch (IOException e) {
-                logging.error("Error while creating local database file!");
-                throw new RuntimeException(e);
-            }
+
+            mainFuture = mainFuture
+                    .thenAcceptAsync(localesLoaded -> {
+                        try {
+                            WGCopier.smallCopy(getResource("worldgrowth.db"), outFilePath);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
+                    .exceptionallyAsync(e -> {
+                        logging.error("Error while creating local database file!");
+                        disablePlugin(e);
+                        return null;
+                    });
+
             if (databaseManager == null || databaseManager instanceof WGMySQLManager) databaseManager = new WGSQLiteManager(this, configuration);
             finalUrl = "jdbc:sqlite:" + outFilePath;
         }
 
         varDeSerializer = new WGVarDeSerializer(this, pointEvents, eventCounterManager, databaseManager);
 
-        mainFuture
+        mainFuture = mainFuture
                 .thenAcceptAsync(dbInit -> databaseManager.initializeDataSource(finalUrl, user, password, maxPoolSize))
                 .exceptionallyAsync(e -> {
-                    logging.error("Error while initializing database datasource!");
+                    logging.error("Error while setting up database!");
                     disablePlugin(e);
                     return null;
                 });
 
-        mainFuture
+        mainFuture = mainFuture
                 .thenAcceptAsync(connected -> {
                     try {
                         databaseManager.createStructure();
@@ -192,7 +232,7 @@ public final class Main extends JavaPlugin {
                     return null;
                 });
 
-        mainFuture
+        mainFuture = mainFuture
                 .thenAcceptAsync(structured -> {
                     try {
                         new WGRegisterer(this, configuration, databaseManager, pluginManager, varDeSerializer, pointEvents).registerEvents();
@@ -206,35 +246,27 @@ public final class Main extends JavaPlugin {
                     return null;
                 });
 
-        mainFuture
+        mainFuture = mainFuture
                 .thenAcceptAsync(registered -> {
-                    maxBorderQuota = configuration.getInt("max-growth-quota");
-                    worldMath = new WGWorldMath(this, configuration);
-                })
-                .exceptionallyAsync(e -> {
-                    logging.error("Error while setting up world math!");
-                    disablePlugin(e);
-                    return null;
-                });
-
-        mainFuture
-                .thenAcceptAsync(mathReadied -> {
                     wgCommand.setExecutor(new WGCommand(this, messager));
                     wgCommand.setTabCompleter(new WGTabCompleter());
                 })
                 .exceptionallyAsync(e -> {
-                    logging.error("Error while setting up plugin command!");
+                    logging.error("Error while setting up commands!");
                     disablePlugin(e);
                     return null;
                 });
+
+        maxBorderQuota = configuration.getInt("max-growth-quota");
+        worldMath = new WGWorldMath(this, configuration);
     }
 
     @Override
     public void onDisable() {
         if (databaseManager == null) return;
 
-        mainFuture
-                .thenAcceptAsync(queued -> {
+        mainFuture = mainFuture
+                .thenAcceptAsync(disabled -> {
                     try {
                         varDeSerializer.serializeVariables();
                         databaseManager.serializeRunnableQueue(hourMaxManager, "INSERT INTO `hour` (`delay`) VALUES (?)");

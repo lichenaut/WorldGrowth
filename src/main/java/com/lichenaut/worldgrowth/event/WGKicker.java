@@ -11,6 +11,6 @@ public class WGKicker implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onLogin(PlayerLoginEvent event) {
-        event.disallow(PlayerLoginEvent.Result.KICK_OTHER, "WorldGrowth is still loading. Please try again in a few seconds.");
+        event.disallow(PlayerLoginEvent.Result.KICK_OTHER, "WorldGrowth is still loading. Please try again in a second.");
     }
 }

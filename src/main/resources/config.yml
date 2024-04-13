@@ -39,7 +39,7 @@ worlds:
 #The amount of blocks the diameter of the world border will increase by per growth (times the world's growth multiplier).
 growth-size: 4
 
-#The maximum amount of blocks the main world border can grow per hour. Responsible for the world border growth of all worlds.
+#The maximum amount of blocks the main world border can grow per hour. Responsible for the world borders of all worlds.
   #Events convert to zero points when the maximum is reached.
 max-block-growth-per-hour: 96
 

@@ -27,9 +27,9 @@ public class WGMessager {
     private final Main main;
     private final Properties properties = new Properties();
     private String locale;
-    private BaseComponent[] progressCommand1;
-    private BaseComponent[] progressCommand2;
-    private BaseComponent[] progressCommand3;
+    private BaseComponent[] infoCommand1;
+    private BaseComponent[] infoCommand2;
+    private BaseComponent[] infoCommand3;
     private BaseComponent[] helpCommand;
     private BaseComponent[] invalidCommand;
     private BaseComponent[] reloadCommand;
@@ -45,9 +45,9 @@ public class WGMessager {
         locale = main.getConfiguration().getString("locale");
         try (FileInputStream inputStream = new FileInputStream(new File(localesFolderString, locale + ".properties"))) {
             properties.load(inputStream);
-            progressCommand1 = loadMessage("infoCommand1");
-            progressCommand2 = loadMessage("infoCommand2");
-            progressCommand3 = loadMessage("infoCommand3");
+            infoCommand1 = loadMessage("infoCommand1");
+            infoCommand2 = loadMessage("infoCommand2");
+            infoCommand3 = loadMessage("infoCommand3");
             helpCommand = loadMessage("helpCommand");
             invalidCommand = loadMessage("invalidCommand");
             reloadCommand = loadMessage("reloadCommand");
