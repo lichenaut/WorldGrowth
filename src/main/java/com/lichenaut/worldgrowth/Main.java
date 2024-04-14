@@ -103,7 +103,7 @@ public final class Main extends JavaPlugin {
                 .thenAcceptAsync(deserialized -> {
                     if (hourMaxManager.getRunnableQueue().isEmpty()) hourMaxManager.addRunnable(new WGHourCounter(this), 0L);
                     eventCounterManager.addRunnable(new WGEventConverter(this), 100L);
-                    borderManager.addRunnable(new WGBorderGrower(this), 200L);
+                    borderManager.addRunnable(new WGBorderGrower(this), 400L);
                 })
                 .exceptionallyAsync(e -> {
                     logging.error("Error while deserializing!");

@@ -14,9 +14,22 @@ public class WGTabCompleter implements TabCompleter {
     @Override
     public List<String> onTabComplete(@Nonnull CommandSender commandSender, @Nonnull Command command, @Nonnull String s, @Nonnull String[] strings) {
         List<String> options = new ArrayList<>();
-        if (commandSender instanceof Player && commandSender.hasPermission("worldgrowth.help") && strings.length == 1) options.add("help");
-        if (commandSender instanceof Player && commandSender.hasPermission("worldgrowth.info") && strings.length == 1) options.add("info");
-        if (commandSender instanceof Player && commandSender.hasPermission("worldgrowth.reload") && strings.length == 1) options.add("reload");
+        if (strings.length == 1) {
+            if (commandSender instanceof Player player) {
+                if (player.hasPermission("worldgrowth.help")) options.add("help");
+                if (player.hasPermission("worldgrowth.info")) options.add("info");
+                if (player.hasPermission("worldgrowth.reload")) options.add("reload");
+                if (player.hasPermission("worldgrowth.vote")) options.add("vote");
+            }
+        } else if (strings.length == 2) {
+            if (strings[0].equals("vote")) {
+                if (commandSender instanceof Player && commandSender.hasPermission("worldgrowth.vote")) {
+                    options.add("yes");
+                    options.add("no");
+                }
+            }
+        }
+
         return options;
     }
 }

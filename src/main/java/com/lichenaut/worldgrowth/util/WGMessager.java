@@ -57,8 +57,6 @@ public class WGMessager {
     private BaseComponent[] deunificationWarning3;
     private BaseComponent[] unificationQueued;
     private BaseComponent[] deunificationOccurred;
-    private BaseComponent[] inDanger;
-    private BaseComponent[] inDangerRare;
 
     public void loadLocaleMessages(String localesFolderString) throws IOException {
         properties.clear();
@@ -95,8 +93,6 @@ public class WGMessager {
             deunificationWarning3 = loadMessage("deunificationWarning3");
             unificationQueued = loadMessage("unificationQueued");
             deunificationOccurred = loadMessage("deunificationOccurred");
-            inDanger = loadMessage("inDanger");
-            inDangerRare = loadMessage("inDangerRare");
         }
     }
 

@@ -59,7 +59,7 @@ public class WGBorderGrower extends BukkitRunnable {
                 int newSize = worldMath.getNaturalSize(wgWorld);
                 main.getScheduler()
                         .runTask(main, () ->
-                                worldBorder.setSize(newSize, //Scale rate of change to size change.
+                                worldBorder.setSize(newSize,
                                         newSize - (int) worldBorder.getSize() / 2));
             }
 
@@ -67,7 +67,7 @@ public class WGBorderGrower extends BukkitRunnable {
             messager.spreadMsg(
                     true,
                     messager.concatArrays(
-                            messager.combineMessage(messager.getGrowthOccurred1(), String.valueOf(mainWorldGrowthSize)),
+                            messager.combineMessage(messager.getGrowthOccurred1(), String.valueOf(worldMath.getNaturalSize(worldMath.getMainWorld()))),
                             messager.getGrowthOccurred2()),
                     true);
             if (worldMath.willTopMaxGrowthPerHour()) {
