@@ -30,17 +30,12 @@ public abstract class WGUnifier extends BukkitRunnable {
         for (WGWorld wgWorld : wgWorlds) {
             int unificationSize = Math.min(biggestWorldSize, wgWorld.maxSize());
             WorldBorder worldBorder = Objects.requireNonNull(main.getServer().getWorld(wgWorld.name())).getWorldBorder();
-            if (instant) {
-                worldBorder.setWarningDistance(0);
-                worldBorder.setWarningTime(60);
-                worldBorder.setDamageBuffer(1);
-            }
-
             main.getScheduler()
                     .runTask(main, () ->
                             worldBorder.setSize(unificationSize, unificationPacing));
         }
 
+        main.getBossBar().unificationIndicator();
         WGMessager messager = main.getMessager();
         messager.spreadMsg(
                 true,
@@ -65,6 +60,7 @@ public abstract class WGUnifier extends BukkitRunnable {
                             worldBorder.setSize(naturalSize, 60L));
         }
 
+        main.getBossBar().deunificationIndicator();
         WGMessager messager = main.getMessager();
         messager.spreadMsg(
                 true,
@@ -73,6 +69,8 @@ public abstract class WGUnifier extends BukkitRunnable {
     }
 
     private void warnDeunification(WGMessager messager, long delay, int minutes) {
+        if (delay < minutes*1200L) return;
+
         Bukkit.getScheduler().runTaskLaterAsynchronously(main, () -> {
             BaseComponent[] concatMessage = messager.combineMessage(messager.getDeunificationWarning1(), String.valueOf(minutes));
 

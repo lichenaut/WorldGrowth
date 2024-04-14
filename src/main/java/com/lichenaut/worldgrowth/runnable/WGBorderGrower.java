@@ -7,6 +7,7 @@ import com.lichenaut.worldgrowth.world.WGWorldMath;
 import lombok.Getter;
 import org.bukkit.Server;
 import org.bukkit.WorldBorder;
+import org.bukkit.configuration.Configuration;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Objects;
@@ -31,11 +32,12 @@ public class WGBorderGrower extends BukkitRunnable {
         int borderQuota = main.getBorderQuota();
         if (points < borderQuota) return;
 
-        int growthSize = main.getConfiguration().getInt("growth-size");
+        Configuration configuration = main.getConfiguration();
+        int growthSize = configuration.getInt("growth-size");
         main.subtractPoints(borderQuota);
 
         if (main.getVoteMath().unificationThresholdMet()) { //Unification event chosen.
-            long delay = borderQuota * main.getConfiguration().getLong("ticks-per-point");
+            long delay = borderQuota * configuration.getLong("ticks-per-point");
             WGRunnableManager unificationManager = main.getUnificationManager();
             unificationManager.addRunnable(new WGUnifier(main) {
                 @Override
@@ -52,7 +54,7 @@ public class WGBorderGrower extends BukkitRunnable {
         } else { //Usual border growth chosen.
             int mainWorldGrowthSize = growthSize * worldMath.getMainWorld().growthMultiplier();
             main.addBlocksGrownThisHour(mainWorldGrowthSize);
-            main.addBorderQuota(main.getConfiguration().getInt("increment-growth-quota-by"));
+            main.addBorderQuota(configuration.getInt("increment-growth-quota-by"));
 
             for (WGWorld wgWorld : worldMath.getWorlds()) {
                 WorldBorder worldBorder = Objects.requireNonNull(server.getWorld(wgWorld.name())).getWorldBorder();
@@ -63,6 +65,7 @@ public class WGBorderGrower extends BukkitRunnable {
                                         newSize - (int) worldBorder.getSize() / 2));
             }
 
+            main.getBossBar().growthIndicator();
             WGMessager messager = main.getMessager();
             messager.spreadMsg(
                     true,

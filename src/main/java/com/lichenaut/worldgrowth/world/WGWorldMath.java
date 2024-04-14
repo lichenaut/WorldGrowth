@@ -66,7 +66,7 @@ public class WGWorldMath {
 
             worldBorder.setWarningDistance(0);
             worldBorder.setWarningTime(60);
-            worldBorder.setDamageBuffer(1);
+            worldBorder.setDamageBuffer(0);
 
             worldBorder.setCenter( //Set a world's border from either config, or the world's spawn location.
                     Objects.requireNonNullElseGet(wgWorld.borderCenter(),

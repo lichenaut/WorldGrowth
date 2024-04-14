@@ -82,7 +82,7 @@ public class WGSQLiteManager implements WGDBManager {
                 if (resultSet.next()) {
                     return resultSet.getInt("quota");
                 } else {
-                    return configuration.getInt("starting-growth-quota"); //TODO: change the way this is retrieved once more is done.
+                    return configuration.getInt("starting-growth-quota");
                 }
             }
         }

@@ -12,10 +12,7 @@ import com.lichenaut.worldgrowth.runnable.WGBorderGrower;
 import com.lichenaut.worldgrowth.runnable.WGEventConverter;
 import com.lichenaut.worldgrowth.runnable.WGHourCounter;
 import com.lichenaut.worldgrowth.runnable.WGRunnableManager;
-import com.lichenaut.worldgrowth.util.WGCopier;
-import com.lichenaut.worldgrowth.util.WGMessager;
-import com.lichenaut.worldgrowth.util.WGRegisterer;
-import com.lichenaut.worldgrowth.util.WGVarDeSerializer;
+import com.lichenaut.worldgrowth.util.*;
 import com.lichenaut.worldgrowth.vote.WGVoteMath;
 import com.lichenaut.worldgrowth.world.WGWorldMath;
 import lombok.Getter;
@@ -55,6 +52,7 @@ public final class Main extends JavaPlugin {
     private final WGRunnableManager hourMaxManager = new WGRunnableManager(this);
     private final WGRunnableManager borderManager = new WGRunnableManager(this);
     private final WGRunnableManager unificationManager = new WGRunnableManager(this);
+    private final WGBossBar bossBar = new WGBossBar(this);
     private final Set<WGPointEvent<?>> pointEvents = new HashSet<>();
     private int borderQuota;
     private int maxBorderQuota;
@@ -102,8 +100,8 @@ public final class Main extends JavaPlugin {
         mainFuture = mainFuture
                 .thenAcceptAsync(deserialized -> {
                     if (hourMaxManager.getRunnableQueue().isEmpty()) hourMaxManager.addRunnable(new WGHourCounter(this), 0L);
-                    eventCounterManager.addRunnable(new WGEventConverter(this), 100L);
-                    borderManager.addRunnable(new WGBorderGrower(this), 400L);
+                    eventCounterManager.addRunnable(new WGEventConverter(this), 200L);
+                    borderManager.addRunnable(new WGBorderGrower(this), 600L);
                 })
                 .exceptionallyAsync(e -> {
                     logging.error("Error while deserializing!");
