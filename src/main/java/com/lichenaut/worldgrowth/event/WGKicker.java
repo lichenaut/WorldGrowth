@@ -10,7 +10,7 @@ import org.bukkit.event.player.PlayerLoginEvent;
 public class WGKicker implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    public void onLogin(PlayerLoginEvent event) {
+    private void onLogin(PlayerLoginEvent event) {
         event.disallow(PlayerLoginEvent.Result.KICK_OTHER, "WorldGrowth is still loading. Please try again in a second.");
     }
 }

@@ -119,7 +119,7 @@ public final class Main extends JavaPlugin {
                     return null;
                 });
 
-        mainFuture = worldFuture //Mainly to have mainFuture reliant on worldFuture's completion.
+        mainFuture = worldFuture
                 .thenAcceptAsync(bordered -> logging.info("WorldGrowth loaded."));
 
         HandlerList.unregisterAll(kicker);
@@ -127,8 +127,8 @@ public final class Main extends JavaPlugin {
         WGMocker mocker = new WGMocker();
         pluginManager.registerEvents(mocker, this);
 
-        wgCommand = Objects.requireNonNull(getCommand("wg"));
         voteMath = new WGVoteMath(this);
+        wgCommand = Objects.requireNonNull(getCommand("wg"));
     }
 
     public void reloadWG() {

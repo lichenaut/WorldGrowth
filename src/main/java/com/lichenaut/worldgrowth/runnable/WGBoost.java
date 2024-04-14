@@ -22,7 +22,8 @@ public abstract class WGBoost extends BukkitRunnable {
                 messager.concatArrays(
                     messager.combineMessage(messager.getBoostedGains1(), String.valueOf(multiplier)),
                     messager.combineMessage(messager.getBoostedGains2(), String.format("%.2f", (double) delay / 1200)),
-                    messager.getBoostedGains3()));
+                    messager.getBoostedGains3()),
+                true);
     }
 
     public void runReset() {
@@ -30,6 +31,7 @@ public abstract class WGBoost extends BukkitRunnable {
         WGMessager messager = main.getMessager();
         messager.spreadMsg(
                 main.getConfiguration().getBoolean("broadcast-boosts"),
-                messager.getDeboostedGains());
+                messager.getDeboostedGains(),
+                true);
     }
 }

@@ -27,9 +27,9 @@ worlds:
   world_the_end:
     name: "world_the_end"
     #border-center: "0 64 0"
-    start-size: 32
+    start-size: 256
     max-size: 16384
-    growth-multiplier: 8
+    growth-multiplier: 64
 
 
 #################
@@ -39,7 +39,7 @@ worlds:
 #The amount of blocks the diameter of the world border will increase by per growth (times the world's growth multiplier).
 growth-size: 4
 
-#The maximum amount of blocks the main world border can grow per hour. Responsible for the world borders of all worlds.
+#The maximum amount of blocks the main world border can grow per hour. The growths of all worlds depend on whether the main world border can grow.
   #Events convert to zero points when the maximum is reached.
 max-block-growth-per-hour: 96
 
@@ -61,7 +61,7 @@ max-growth-quota: 1024
   #1. Expand the world borders as usual (this is the default vote choice).
   #2. Make the borders of all worlds the size of the largest world border (up until their 'max-size's), where points are converted into duration.
 unification-enabled: true
-  #This is mainly to expand the world border of The Nether for temporary structure access in the early game.
+  #Mainly to expand the world border of The Nether for temporary structure access in the early game, but it also creates a lot of fun gameplay loops.
 
 #Each point adds this many ticks to the duration of the unification event.
 ticks-per-point: 1200

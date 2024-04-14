@@ -27,36 +27,76 @@ public class WGMessager {
     private final Main main;
     private final Properties properties = new Properties();
     private String locale;
+    private BaseComponent[] prefix;
     private BaseComponent[] infoCommand1;
     private BaseComponent[] infoCommand2;
     private BaseComponent[] infoCommand3;
     private BaseComponent[] helpCommand;
     private BaseComponent[] invalidCommand;
     private BaseComponent[] reloadCommand;
+    private BaseComponent[] onlyPlayerCommand;
     private BaseComponent[] onlyConsoleCommand;
     private BaseComponent[] usageBoostCommand;
     private BaseComponent[] boostedGains1;
     private BaseComponent[] boostedGains2;
     private BaseComponent[] boostedGains3;
     private BaseComponent[] deboostedGains;
+    private BaseComponent[] growthIncoming;
+    private BaseComponent[] voteYesCommand;
+    private BaseComponent[] voteNoCommand;
+    private BaseComponent[] usageVoteCommand;
+    private BaseComponent[] growthOccurred1;
+    private BaseComponent[] growthOccurred2;
+    private BaseComponent[] pointsOff;
+    private BaseComponent[] pointsOn;
+    private BaseComponent[] unificationOccurred1;
+    private BaseComponent[] unificationOccurred2;
+    private BaseComponent[] unificationOccurred3;
+    private BaseComponent[] deunificationWarning1;
+    private BaseComponent[] deunificationWarning2;
+    private BaseComponent[] deunificationWarning3;
+    private BaseComponent[] unificationQueued;
+    private BaseComponent[] deunificationOccurred;
+    private BaseComponent[] inDanger;
+    private BaseComponent[] inDangerRare;
 
     public void loadLocaleMessages(String localesFolderString) throws IOException {
         properties.clear();
         locale = main.getConfiguration().getString("locale");
         try (FileInputStream inputStream = new FileInputStream(new File(localesFolderString, locale + ".properties"))) {
             properties.load(inputStream);
+            prefix = loadMessage("prefix");
             infoCommand1 = loadMessage("infoCommand1");
             infoCommand2 = loadMessage("infoCommand2");
             infoCommand3 = loadMessage("infoCommand3");
             helpCommand = loadMessage("helpCommand");
             invalidCommand = loadMessage("invalidCommand");
             reloadCommand = loadMessage("reloadCommand");
+            onlyPlayerCommand = loadMessage("onlyPlayerCommand");
             onlyConsoleCommand = loadMessage("onlyConsoleCommand");
             usageBoostCommand = loadMessage("usageBoostCommand");
             boostedGains1 = loadMessage("boostedGains1");
             boostedGains2 = loadMessage("boostedGains2");
             boostedGains3 = loadMessage("boostedGains3");
             deboostedGains = loadMessage("deboostedGains");
+            growthIncoming = loadMessage("growthIncoming");
+            voteYesCommand = loadMessage("voteYesCommand");
+            voteNoCommand = loadMessage("voteNoCommand");
+            usageVoteCommand = loadMessage("usageVoteCommand");
+            growthOccurred1 = loadMessage("growthOccurred1");
+            growthOccurred2 = loadMessage("growthOccurred2");
+            pointsOff = loadMessage("pointsOff");
+            pointsOn = loadMessage("pointsOn");
+            unificationOccurred1 = loadMessage("unificationOccurred1");
+            unificationOccurred2 = loadMessage("unificationOccurred2");
+            unificationOccurred3 = loadMessage("unificationOccurred3");
+            deunificationWarning1 = loadMessage("deunificationWarning1");
+            deunificationWarning2 = loadMessage("deunificationWarning2");
+            deunificationWarning3 = loadMessage("deunificationWarning3");
+            unificationQueued = loadMessage("unificationQueued");
+            deunificationOccurred = loadMessage("deunificationOccurred");
+            inDanger = loadMessage("inDanger");
+            inDangerRare = loadMessage("inDangerRare");
         }
     }
 
@@ -153,17 +193,29 @@ public class WGMessager {
         return builder.create();
     }
 
-    public void sendMsg(CommandSender sender, BaseComponent[] message) {
+    public void sendMsg(CommandSender sender, BaseComponent[] message, boolean includePrefix) {
         if (sender instanceof Player) {
-            sender.spigot().sendMessage(message);
+            if (prefix == null || !includePrefix) {
+                sender.spigot().sendMessage(message);
+            } else {
+                sender.spigot().sendMessage(concatArrays(prefix, message));
+            }
+
             return;
         }
 
         infoLog(message);
     }
 
-    public void spreadMsg(boolean broadcast, BaseComponent[] message) {
-        if (broadcast) main.getServer().spigot().broadcast(message);
+    public void spreadMsg(boolean broadcast, BaseComponent[] message, boolean includePrefix) {
+        if (broadcast) {
+            if (prefix == null || !includePrefix) {
+                main.getServer().spigot().broadcast(message);
+            } else {
+                main.getServer().spigot().broadcast(concatArrays(prefix, message));
+            }
+        }
+
         infoLog(message);
     }
 

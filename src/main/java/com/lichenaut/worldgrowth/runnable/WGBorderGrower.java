@@ -1,6 +1,7 @@
 package com.lichenaut.worldgrowth.runnable;
 
 import com.lichenaut.worldgrowth.Main;
+import com.lichenaut.worldgrowth.util.WGMessager;
 import com.lichenaut.worldgrowth.world.WGWorld;
 import com.lichenaut.worldgrowth.world.WGWorldMath;
 import lombok.Getter;
@@ -49,7 +50,8 @@ public class WGBorderGrower extends BukkitRunnable {
                 }
             }, delay);
         } else { //Usual border growth chosen.
-            main.addBlocksGrownThisHour(growthSize * worldMath.getMainWorld().growthMultiplier());
+            int mainWorldGrowthSize = growthSize * worldMath.getMainWorld().growthMultiplier();
+            main.addBlocksGrownThisHour(mainWorldGrowthSize);
             main.addBorderQuota(main.getConfiguration().getInt("increment-growth-quota-by"));
 
             for (WGWorld wgWorld : worldMath.getWorlds()) {
@@ -59,6 +61,20 @@ public class WGBorderGrower extends BukkitRunnable {
                         .runTask(main, () ->
                                 worldBorder.setSize(newSize, //Scale rate of change to size change.
                                         newSize - (int) worldBorder.getSize() / 2));
+            }
+
+            WGMessager messager = main.getMessager();
+            messager.spreadMsg(
+                    true,
+                    messager.concatArrays(
+                            messager.combineMessage(messager.getGrowthOccurred1(), String.valueOf(mainWorldGrowthSize)),
+                            messager.getGrowthOccurred2()),
+                    true);
+            if (worldMath.willTopMaxGrowthPerHour()) {
+                messager.spreadMsg(
+                        true,
+                        main.getMessager().getPointsOff(),
+                        true);
             }
         }
 

@@ -22,7 +22,6 @@ dependencies {
     implementation 'org.xerial:sqlite-jdbc:3.45.2.0'
     implementation 'com.mysql:mysql-connector-j:8.3.0'
     implementation 'org.bstats:bstats-bukkit-lite:1.8'
-    //testImplementation 'org.mockito:mockito-core:5.11.0'
 }
 
 def targetJavaVersion = 17

@@ -4,21 +4,31 @@ import com.lichenaut.worldgrowth.Main;
 import com.lichenaut.worldgrowth.runnable.WGBoost;
 import com.lichenaut.worldgrowth.runnable.WGRunnableManager;
 import com.lichenaut.worldgrowth.util.WGMessager;
-import lombok.RequiredArgsConstructor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import javax.annotation.Nonnull;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-@RequiredArgsConstructor
 public class WGCommand implements CommandExecutor {
 
     private static CompletableFuture<Void> commandFuture = CompletableFuture.completedFuture(null);
     private final Main main;
     private final WGMessager messager;
+    private final Set<String> voteOptions = new HashSet<>();
+
+    public WGCommand(Main main, WGMessager messager) {
+        this.main = main;
+        this.messager = messager;
+        voteOptions.add("yes");
+        voteOptions.add("y");
+        voteOptions.add("no");
+        voteOptions.add("n");
+    }
 
     @Override
     public boolean onCommand(@Nonnull CommandSender commandSender, @Nonnull Command command, @Nonnull String s, @Nonnull String[] strings) {
@@ -26,7 +36,7 @@ public class WGCommand implements CommandExecutor {
 
         if (strings.length == 0) {
             commandFuture = commandFuture
-                    .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getInvalidCommand()));
+                    .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getInvalidCommand(), false));
             return true;
         }
 
@@ -51,7 +61,7 @@ public class WGCommand implements CommandExecutor {
                 if (checkDisallowed(commandSender, "worldgrowth.help")) return true;
 
                 commandFuture = commandFuture
-                        .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getHelpCommand()));
+                        .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getHelpCommand(), false));
                 return true;
             }
             case "reload" -> {
@@ -60,20 +70,20 @@ public class WGCommand implements CommandExecutor {
                 main.reloadWG();
 
                 main.setMainFuture(main.getMainFuture()
-                                .thenAcceptAsync(reloaded -> messager.sendMsg(commandSender, messager.getReloadCommand())));
+                                .thenAcceptAsync(reloaded -> messager.sendMsg(commandSender, messager.getReloadCommand(), false)));
                 return true;
             }
             case "boost" -> {
                 if (commandSender instanceof Player player) {
                     if (player.isOp()) {
                         commandFuture = commandFuture
-                                .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getOnlyConsoleCommand()));
+                                .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getOnlyConsoleCommand(), false));
                     }
                     return true;
                 }
                 if (strings.length != 3) {
                     commandFuture = commandFuture
-                            .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getUsageBoostCommand()));
+                            .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getUsageBoostCommand(), false));
                     return true;
                 }
 
@@ -81,15 +91,13 @@ public class WGCommand implements CommandExecutor {
                         .thenApplyAsync(processed -> CompletableFuture.supplyAsync(() -> {
                             String multiplier = strings[1];
                             String ticks = strings[2];
-                            if (!multiplier.matches("[0-9]+(\\.[0-9]+)?") || !ticks.matches("[0-9]+")) {
-                                return null;
-                            }
+                            if (!multiplier.matches("[0-9]+(\\.[0-9]+)?") || !ticks.matches("[0-9]+")) return null;
 
                             return new String[]{multiplier, ticks};
                         }))
                         .thenAcceptAsync(valuesFuture -> valuesFuture.thenAcceptAsync(values -> {
                             if (values == null) {
-                                messager.sendMsg(commandSender, messager.getUsageBoostCommand());
+                                messager.sendMsg(commandSender, messager.getUsageBoostCommand(), false);
                                 return;
                             }
 
@@ -113,34 +121,38 @@ public class WGCommand implements CommandExecutor {
             }
             case "vote" -> {
                 if (!(commandSender instanceof Player)) {
-                    //TODO only player msg
+                    commandFuture = commandFuture
+                            .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getOnlyPlayerCommand(), false));
                     return true;
                 }
 
                 if (checkDisallowed(commandSender, "worldgrowth.vote")) return true;
 
-                if (strings.length != 2) {
-                    //TODO invalid msg
+                if (strings.length != 2 || !voteOptions.contains(strings[1].toLowerCase())) {
+                    commandFuture = commandFuture
+                            .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getUsageVoteCommand(), false));
                     return true;
                 }
-
-                //TODO use regex to parse for yes/y or no/n only
 
                 if (strings[1].equalsIgnoreCase("yes") || strings[1].equalsIgnoreCase("y")) {
                     main.getVoteMath().addVote((Player) commandSender, true);
-                    return true;
+                    commandFuture = commandFuture
+                            .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getVoteYesCommand(), false));
                 } else if (strings[1].equalsIgnoreCase("no") || strings[1].equalsIgnoreCase("n")) {
                     main.getVoteMath().addVote((Player) commandSender, false);
-                    return true;
+                    commandFuture = commandFuture
+                            .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getVoteNoCommand(), false));
+                } else {
+                    commandFuture = commandFuture
+                            .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getUsageVoteCommand(), false));
                 }
 
-                //TODO invalid msg
                 return true;
             }
         }
 
         commandFuture = commandFuture
-                .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getInvalidCommand()));
+                .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getInvalidCommand(), false));
         return true;
     }
 
