@@ -2,7 +2,7 @@
 disable-plugin: false
 
 #Guide: https://github.com/lichenaut/WorldGrowth/blob/main/README.md
-  #Choosing a world seed is recommended, unless you want to risk being trapped in the desert! ;)
+  #Choosing a world seed is recommended, unless you want to risk being trapped in the ocean! ;)
 
 ################
 #World Settings#
@@ -14,7 +14,7 @@ worlds:
   world:
     main: true
     name: "world"
-    #border-center: "0 64 0" //TODO test functionality
+    #border-center: "0 64 0"
     start-size: 32
     max-size: 16384
     growth-multiplier: 8
@@ -205,7 +205,7 @@ events:
     points: 1
   entity-enter-love-mode:
   entity-exhaustion:
-    quota: 1024
+    quota: 4096
     points: 1
   entity-explode:
     quota: 215

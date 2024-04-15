@@ -4,6 +4,7 @@ import com.lichenaut.worldgrowth.Main;
 import lombok.Getter;
 import org.bukkit.Location;
 import org.bukkit.Server;
+import org.bukkit.World;
 import org.bukkit.WorldBorder;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
@@ -62,16 +63,17 @@ public class WGWorldMath {
 
         for (WGWorld wgWorld : worlds) {
             String worldName = wgWorld.name();
-            WorldBorder worldBorder = Objects.requireNonNull(server.getWorld(worldName)).getWorldBorder();
+            World world = server.getWorld(worldName);
+            if (world == null) throw new IllegalArgumentException("World " + worldName + " not found!");
 
+            WorldBorder worldBorder = world.getWorldBorder();
             worldBorder.setWarningDistance(0);
             worldBorder.setWarningTime(60);
             worldBorder.setDamageBuffer(0);
-
             worldBorder.setCenter( //Set a world's border from either config, or the world's spawn location.
                     Objects.requireNonNullElseGet(wgWorld.borderCenter(),
-                            () -> Objects.requireNonNull(server.getWorld(worldName)).getSpawnLocation()));
-
+                            world::getSpawnLocation));
+            world.setSpawnLocation(worldBorder.getCenter());
             worldBorder.setSize(getNaturalSize(wgWorld), 0L);
         }
     }

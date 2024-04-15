@@ -57,6 +57,7 @@ public final class Main extends JavaPlugin {
     private int blocksGrownThisHour;
     private double points;
     private double boostMultiplier = 1.0;
+    private boolean instantDisable = false;
     private WGRunnableManager boostManager = new WGRunnableManager(this);
     private PluginCommand wgCommand;
     private Configuration configuration;
@@ -78,6 +79,8 @@ public final class Main extends JavaPlugin {
 
         reloadWG();
 
+        if (instantDisable) return;
+
         mainFuture = mainFuture
                 .thenAcceptAsync(commandsSet -> {
                     try {
@@ -98,12 +101,12 @@ public final class Main extends JavaPlugin {
         mainFuture = mainFuture
                 .thenAcceptAsync(deserialized -> {
                     if (hourMaxManager.getRunnableQueue().isEmpty()) hourMaxManager.addRunnable(new WGHourCounter(this), 0L);
+                    autosaveManager.addRunnable(new WGAutosaver(this), 0L);
                     eventCounterManager.addRunnable(new WGEventConverter(this), 200L);
                     borderManager.addRunnable(new WGBorderGrower(this), 600L);
-                    autosaveManager.addRunnable(new WGAutosaver(this), 35000L);
                 })
                 .exceptionallyAsync(e -> {
-                    logging.error("Error while deserializing!");
+                    logging.error("Error while queueing runnable managers!");
                     disablePlugin(e);
                     return null;
                 });
@@ -135,15 +138,15 @@ public final class Main extends JavaPlugin {
         HandlerList.unregisterAll(this);
         pointEvents.clear();
 
-        CompletableFuture<Void> disabledFuture = mainFuture
-                .thenAcceptAsync(setup -> scheduler.runTask(this, () -> {
-                    if (configuration.getBoolean("disable-plugin")) {
-                        logging.info("Plugin disabled in config.yml."); //TODO test this functionality
-                        disablePlugin();
-                    }
-                }));
+        if (configuration.getBoolean("disable-plugin")) {
+            logging.info("Plugin disabled in config.yml.");
+            instantDisable = true;
+            disablePlugin();
+        }
 
-        mainFuture = disabledFuture
+        if (instantDisable) return;
+
+        mainFuture = mainFuture
                 .thenAcceptAsync(disabledChecked -> {
                     String localesFolderString = getDataFolder().getPath() + separator + "locales";
                     try {
@@ -252,7 +255,7 @@ public final class Main extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (databaseManager == null) return;
+        if (databaseManager == null || instantDisable) return;
 
         mainFuture = mainFuture
                 .thenAcceptAsync(disabled -> {

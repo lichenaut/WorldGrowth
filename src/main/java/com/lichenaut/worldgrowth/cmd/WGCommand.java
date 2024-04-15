@@ -48,6 +48,70 @@ public class WGCommand implements CommandExecutor {
         }
 
         switch (strings[0]) {
+            case "boost" -> {
+                if (commandSender instanceof Player player) {
+                    if (player.isOp()) {
+                        commandFuture = commandFuture
+                                .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getOnlyConsoleCommand(), false));
+                    }
+                    return true;
+                }
+
+                if (strings.length != 3) {
+                    commandFuture = commandFuture
+                            .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getUsageBoostCommand(), false));
+                    return true;
+                }
+
+                commandFuture = commandFuture
+                        .thenApplyAsync(processed -> CompletableFuture.supplyAsync(() -> {
+                            String multiplier = strings[1];
+                            String ticks = strings[2];
+                            if (!multiplier.matches("[0-9]+(\\.[0-9]+)?") || !ticks.matches("[0-9]+")) return null;
+
+                            return new String[]{multiplier, ticks};
+                        }))
+                        .thenAcceptAsync(valuesFuture -> valuesFuture.thenAcceptAsync(values -> {
+                            if (values == null) {
+                                messager.sendMsg(commandSender, messager.getUsageBoostCommand(), false);
+                                return;
+                            }
+
+                            double multiplierDouble = Double.parseDouble(values[0]);
+                            long delay = Integer.parseInt(values[1]);
+                            WGRunnableManager boosterManager = main.getBoostManager();
+                            boosterManager.addRunnable(new WGBoost(main, multiplierDouble) {
+                                @Override
+                                public void run() {
+                                    runBoost(delay);
+                                }
+                            }, 0L);
+                            boosterManager.addRunnable(new WGBoost(main, multiplierDouble) {
+                                @Override
+                                public void run() {
+                                    runReset();
+                                }
+                            }, delay);
+                        }));
+
+                return true;
+            }
+            case "help" -> {
+                if (checkDisallowed(commandSender, "worldgrowth.help")) return true;
+
+                commandFuture = commandFuture
+                        .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getHelpCommand(), false));
+                return true;
+            }
+            case "reload" -> {
+                if (checkDisallowed(commandSender, "worldgrowth.reload")) return true;
+
+                main.reloadWG();
+
+                main.setMainFuture(main.getMainFuture()
+                                .thenAcceptAsync(reloaded -> messager.sendMsg(commandSender, messager.getReloadCommand(), false)));
+                return true;
+            }
             case "stats" -> {
                 if (checkDisallowed(commandSender, "worldgrowth.stats")) return true;
 
@@ -120,6 +184,8 @@ public class WGCommand implements CommandExecutor {
                                 components.add(new TextComponent(worldName));
                                 components.add(new TextComponent(messager.getStatsCommand6()));
                                 components.add(new TextComponent(String.format("%.2f", Objects.requireNonNull(server.getWorld(worldName)).getWorldBorder().getSize())));
+                                components.add(new TextComponent(messager.combineMessage(messager.getIncompleteBarColor(), "/")));
+                                components.add(new TextComponent(String.format("%,.2f", (double) wgWorld.maxSize())));
                                 components.add(new TextComponent("\n"));
                             }
 
@@ -132,68 +198,6 @@ public class WGCommand implements CommandExecutor {
                             messager.sendMsg(commandSender, baseComponents, false);
                         });
 
-                return true;
-            }
-            case "help" -> {
-                if (checkDisallowed(commandSender, "worldgrowth.help")) return true;
-
-                commandFuture = commandFuture
-                        .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getHelpCommand(), false));
-                return true;
-            }
-            case "reload" -> {
-                if (checkDisallowed(commandSender, "worldgrowth.reload")) return true;
-
-                main.reloadWG();
-
-                main.setMainFuture(main.getMainFuture()
-                                .thenAcceptAsync(reloaded -> messager.sendMsg(commandSender, messager.getReloadCommand(), false)));
-                return true;
-            }
-            case "boost" -> {
-                if (commandSender instanceof Player player) {
-                    if (player.isOp()) {
-                        commandFuture = commandFuture
-                                .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getOnlyConsoleCommand(), false));
-                    }
-                    return true;
-                }
-                if (strings.length != 3) {
-                    commandFuture = commandFuture
-                            .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getUsageBoostCommand(), false));
-                    return true;
-                }
-
-                commandFuture = commandFuture
-                        .thenApplyAsync(processed -> CompletableFuture.supplyAsync(() -> {
-                            String multiplier = strings[1];
-                            String ticks = strings[2];
-                            if (!multiplier.matches("[0-9]+(\\.[0-9]+)?") || !ticks.matches("[0-9]+")) return null;
-
-                            return new String[]{multiplier, ticks};
-                        }))
-                        .thenAcceptAsync(valuesFuture -> valuesFuture.thenAcceptAsync(values -> {
-                            if (values == null) {
-                                messager.sendMsg(commandSender, messager.getUsageBoostCommand(), false);
-                                return;
-                            }
-
-                            double multiplierDouble = Double.parseDouble(values[0]);
-                            long delay = Integer.parseInt(values[1]);
-                            WGRunnableManager boosterManager = main.getBoostManager();
-                            boosterManager.addRunnable(new WGBoost(main, multiplierDouble) {
-                                @Override
-                                public void run() {
-                                    runBoost(delay);
-                                }
-                            }, 0L);
-                            boosterManager.addRunnable(new WGBoost(main, multiplierDouble) {
-                                @Override
-                                public void run() {
-                                    runReset();
-                                }
-                            }, delay);
-                        }));
                 return true;
             }
             case "vote" -> {
