@@ -83,7 +83,7 @@ public final class Main extends JavaPlugin {
         mainFuture = mainFuture
                 .thenAcceptAsync(commandsSet -> {
                     try {
-                        varDeSerializer.deserializeVariablesExceptCount();
+                        varDeSerializer.deserializeVariablesExceptCounts();
                         databaseManager.deserializeRunnableQueue(hourMaxManager, "SELECT `delay` FROM `hour`");
                         databaseManager.deserializeRunnableQueue(unificationManager, "SELECT `delay` FROM `unifications`");
                         databaseManager.deserializeRunnableQueue(boostManager, "SELECT `multiplier`, `delay` FROM `boosts`");

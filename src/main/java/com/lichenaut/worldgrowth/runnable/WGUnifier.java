@@ -8,7 +8,6 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.md_5.bungee.api.chat.BaseComponent;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.WorldBorder;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -25,11 +24,11 @@ public abstract class WGUnifier extends BukkitRunnable {
     public void runUnification(long delay, boolean instant) {
         WGWorldMath worldMath = main.getWorldMath();
         Set<WGWorld> wgWorlds = worldMath.getWorlds();
-        int biggestWorldSize = main.getServer().getWorlds().stream().mapToInt(world -> (int) world.getWorldBorder().getSize()).max().orElseThrow();
+        int maxWorldSize = main.getServer().getWorlds().stream().mapToInt(world -> (int) world.getWorldBorder().getSize()).max().orElseThrow();
         long unificationPacing = instant ? 0L : 60L;
         for (WGWorld wgWorld : wgWorlds) {
-            int unificationSize = Math.min(biggestWorldSize, wgWorld.maxSize());
             WorldBorder worldBorder = Objects.requireNonNull(main.getServer().getWorld(wgWorld.name())).getWorldBorder();
+            double unificationSize = Math.min(maxWorldSize, wgWorld.maxSize());
             main.getScheduler()
                     .runTask(main, () ->
                             worldBorder.setSize(unificationSize, unificationPacing));
@@ -37,19 +36,13 @@ public abstract class WGUnifier extends BukkitRunnable {
 
         main.getBossBar().unificationIndicator();
         WGMessager messager = main.getMessager();
-        messager.spreadMsg(
-                true,
-                messager.concatArrays(
-                        messager.combineMessage(messager.getUnificationOccurred1(), String.valueOf(biggestWorldSize)),
-                        messager.combineMessage(messager.getUnificationOccurred2(), String.format("%.2f", (double) delay / 1200)),
-                        messager.getUnificationOccurred3()),
-                true);
-
         warnDeunification(messager, delay, 5);
         warnDeunification(messager, delay, 1);
     }
 
     public void runReset() {
+        if (main.getBorderManager().getRunnableQueue().size() > 1) return;
+
         WGWorldMath worldMath = main.getWorldMath();
         Set<WGWorld> wgWorlds = worldMath.getWorlds();
         for (WGWorld wgWorld : wgWorlds) {
@@ -62,9 +55,17 @@ public abstract class WGUnifier extends BukkitRunnable {
 
         main.getBossBar().deunificationIndicator();
         WGMessager messager = main.getMessager();
+        BaseComponent[] concatMessage = messager.getDeunificationOccurred();
+
+        if (unificationQueued()) {
+            concatMessage = messager.concatArrays(
+                    concatMessage,
+                    messager.getUnificationQueued());
+        }
+
         messager.spreadMsg(
                 true,
-                messager.getDeunificationOccurred(),
+                concatMessage,
                 true);
     }
 
@@ -84,7 +85,7 @@ public abstract class WGUnifier extends BukkitRunnable {
                         messager.getDeunificationWarning2());
             }
 
-            if (main.getUnificationManager().getRunnableQueue().size() > 1) {
+            if (unificationQueued()) {
                 concatMessage = messager.concatArrays(
                         concatMessage,
                         messager.getUnificationQueued());
@@ -97,9 +98,7 @@ public abstract class WGUnifier extends BukkitRunnable {
         }, delay - (minutes*1200L));
     }
 
-    private boolean isOutsideNewBorder(Location playerLocation, Location worldBorderCenter, double worldBorderSize) {
-        double dx = playerLocation.getX() - worldBorderCenter.getX();
-        double dz = playerLocation.getZ() - worldBorderCenter.getZ();
-        return dx * dx + dz * dz > worldBorderSize * worldBorderSize / 4.0;
+    private boolean unificationQueued() {
+        return main.getUnificationManager().getRunnableQueue().size() > 1;
     }
 }

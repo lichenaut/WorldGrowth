@@ -4,12 +4,14 @@ import com.lichenaut.worldgrowth.Main;
 import com.lichenaut.worldgrowth.runnable.WGBoost;
 import com.lichenaut.worldgrowth.runnable.WGRunnableManager;
 import com.lichenaut.worldgrowth.util.WGMessager;
+import net.md_5.bungee.api.chat.BaseComponent;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import javax.annotation.Nonnull;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -41,20 +43,23 @@ public class WGCommand implements CommandExecutor {
         }
 
         switch (strings[0]) {
-            case "info" -> { //TODO wip
+            case "info" -> {
                 if (checkDisallowed(commandSender, "worldgrowth.info")) return true;
 
-                int greenBars = (int) main.getPoints() / main.getBorderQuota() * 33;
-                int grayBars = 33 - greenBars;
-                StringBuilder progressBar = new StringBuilder("[");
-                progressBar.append("=".repeat(Math.max(0, greenBars)));
-                progressBar.append(" ".repeat(Math.max(0, grayBars)));
-                progressBar.append("]\n");
+                StringBuilder progressBar = new StringBuilder(Arrays.toString(messager.getInfoCommand1()) + "\n");
+                BaseComponent[] completeBarColor = messager.getCompleteBarColor();
+                BaseComponent[] incompleteBarColor = messager.getIncompleteBarColor();
+                BaseComponent[] completeBar = messager.combineMessage(completeBarColor, "=");
+                BaseComponent[] incompleteBar = messager.combineMessage(incompleteBarColor, "=");
+                int completeBars = (int) (33 * main.getPoints() / main.getBorderQuota());
+                int incompleteBars = 33 - completeBars;
+                double progressPercent = 100 * main.getPoints() / (double) main.getBorderQuota();
+                progressBar.append(Arrays.toString(messager.combineMessage(completeBarColor, "[")));
+                progressBar.append(Arrays.toString(completeBar).repeat(completeBars));
+                progressBar.append(Arrays.toString(incompleteBar).repeat(incompleteBars));
+                progressBar.append(Arrays.toString(messager.combineMessage(incompleteBarColor, "] " + String.format("%.2f", progressPercent))));
+                //TODO
 
-                /*messager.sendMsg(commandSender,
-                        messager.concatArrays(
-                                messager.combineMessage(progressBar.toString(), messager.getProgressCommand1()),
-                                messager.combineMessage(String.valueOf()), messager.getProgressCommand2()),*/
                 return true;
             }
             case "help" -> {

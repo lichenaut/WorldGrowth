@@ -28,9 +28,6 @@ public class WGMessager {
     private final Properties properties = new Properties();
     private String locale;
     private BaseComponent[] prefix;
-    private BaseComponent[] infoCommand1;
-    private BaseComponent[] infoCommand2;
-    private BaseComponent[] infoCommand3;
     private BaseComponent[] helpCommand;
     private BaseComponent[] invalidCommand;
     private BaseComponent[] reloadCommand;
@@ -57,6 +54,16 @@ public class WGMessager {
     private BaseComponent[] deunificationWarning3;
     private BaseComponent[] unificationQueued;
     private BaseComponent[] deunificationOccurred;
+    private BaseComponent[] infoCommand1;
+    private BaseComponent[] incompleteBarColor;
+    private BaseComponent[] completeBarColor;
+    private BaseComponent[] infoCommand2;
+    private BaseComponent[] infoCommand3;
+    private BaseComponent[] infoCommand4;
+    private BaseComponent[] infoCommand5;
+    private BaseComponent[] infoCommand6;
+    private BaseComponent[] infoCommandArrow;
+    private BaseComponent[] infoCommand7;
 
     public void loadLocaleMessages(String localesFolderString) throws IOException {
         properties.clear();
@@ -64,9 +71,6 @@ public class WGMessager {
         try (FileInputStream inputStream = new FileInputStream(new File(localesFolderString, locale + ".properties"))) {
             properties.load(inputStream);
             prefix = loadMessage("prefix");
-            infoCommand1 = loadMessage("infoCommand1");
-            infoCommand2 = loadMessage("infoCommand2");
-            infoCommand3 = loadMessage("infoCommand3");
             helpCommand = loadMessage("helpCommand");
             invalidCommand = loadMessage("invalidCommand");
             reloadCommand = loadMessage("reloadCommand");
@@ -93,6 +97,16 @@ public class WGMessager {
             deunificationWarning3 = loadMessage("deunificationWarning3");
             unificationQueued = loadMessage("unificationQueued");
             deunificationOccurred = loadMessage("deunificationOccurred");
+            infoCommand1 = loadMessage("infoCommand1");
+            incompleteBarColor = loadMessage("incompleteBarColor");
+            completeBarColor = loadMessage("completeBarColor");
+            infoCommand2 = loadMessage("infoCommand2");
+            infoCommand3 = loadMessage("infoCommand3");
+            infoCommand4 = loadMessage("infoCommand4");
+            infoCommand5 = loadMessage("infoCommand5");
+            infoCommand6 = loadMessage("infoCommand6");
+            infoCommandArrow = loadMessage("infoCommandArrow");
+            infoCommand7 = loadMessage("infoCommand7");
         }
     }
 
@@ -219,6 +233,12 @@ public class WGMessager {
         main.getLogging().info(new TextComponent(message).toLegacyText().replaceAll("§[0-9a-fA-FklmnoKLMNO]", ""));
     }
 
+    public BaseComponent[] concatArrays(BaseComponent[]... arrays) {
+        ArrayList<BaseComponent> resultList = new ArrayList<>();
+        for (BaseComponent[] array : arrays) resultList.addAll(Arrays.asList(array));
+        return resultList.toArray(new BaseComponent[0]);
+    }
+
     public BaseComponent[] combineMessage(BaseComponent[] msgComponent, String msgString) {
         if (msgString == null || msgString.isEmpty()) return msgComponent;
 
@@ -240,27 +260,6 @@ public class WGMessager {
         return combined;
     }
 
-    public BaseComponent[] combineMessage(String msgString, BaseComponent[] msgComponent) {
-        if (msgString == null || msgString.isEmpty()) return msgComponent;
-
-        BaseComponent[] textComponent = new BaseComponent[]{TextComponent.fromLegacy(msgString)};
-
-        ComponentBuilder builder = new ComponentBuilder("");
-        ArrayList<Object> lastFormat = continueFormat(msgComponent);
-        builder.color((ChatColor) lastFormat.get(0));
-        Object lastStyle = lastFormat.get(1);
-        if (lastStyle != null) builder.style((ComponentStyle) lastStyle);
-        for (BaseComponent component : textComponent) builder.append(component);
-        textComponent = builder.create();
-
-        int msgLength = msgComponent.length;
-        int textLength = textComponent.length;
-        BaseComponent[] combined = new BaseComponent[msgLength + textLength];
-        System.arraycopy(textComponent, 0, combined, msgLength, textLength);
-        System.arraycopy(msgComponent, 0, combined, 0, msgLength);
-        return combined;
-    }
-
     private static ArrayList<Object> continueFormat(BaseComponent[] components) {
         ArrayList<Object> format = new ArrayList<>();
         format.add(ChatColor.WHITE);
@@ -274,11 +273,5 @@ public class WGMessager {
             }
         }
         return format;
-    }
-
-    public BaseComponent[] concatArrays(BaseComponent[]... arrays) {
-        ArrayList<BaseComponent> resultList = new ArrayList<>();
-        for (BaseComponent[] array : arrays) resultList.addAll(Arrays.asList(array));
-        return resultList.toArray(new BaseComponent[0]);
     }
 }

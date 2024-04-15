@@ -51,7 +51,7 @@ public class WGBossBar {
                 bossBar.addPlayer(player);
             });
             bossBar.setVisible(true);
-            scheduler.runTaskLaterAsynchronously(main, () -> bossBar.setProgress(0.7), 8L);
+            scheduler.runTaskLaterAsynchronously(main, () -> bossBar.setProgress(0.7), 12L);
             scheduler.runTaskLaterAsynchronously(main, () -> {
                 bossBar.setVisible(false);
                 bossBar.removeAll();

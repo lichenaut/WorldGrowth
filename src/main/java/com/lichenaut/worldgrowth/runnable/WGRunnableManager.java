@@ -24,7 +24,7 @@ public class WGRunnableManager {
     }
 
     public void addRunnable(BukkitRunnable bukkitRunnable, long delay) {
-        runnableQueue.offer(new WGRunnable(bukkitRunnable, delay));
+        runnableQueue.offer(new WGRunnable(main, bukkitRunnable, delay));
         if (currentTask == null) scheduleNextRunnable();
     }
 

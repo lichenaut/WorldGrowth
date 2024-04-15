@@ -25,6 +25,8 @@ public class WGBorderGrower extends BukkitRunnable {
 
     @Override
     public void run() {
+        main.getBorderManager().addRunnable(this, 6000L);
+
         WGWorldMath worldMath = main.getWorldMath();
         if (worldMath.willTopMaxGrowthPerHour()) return;
 
@@ -36,6 +38,7 @@ public class WGBorderGrower extends BukkitRunnable {
         int growthSize = configuration.getInt("growth-size");
         main.subtractPoints(borderQuota);
 
+        WGMessager messager = main.getMessager();
         if (main.getVoteMath().unificationThresholdMet()) { //Unification event chosen.
             long delay = borderQuota * configuration.getLong("ticks-per-point");
             WGRunnableManager unificationManager = main.getUnificationManager();
@@ -51,22 +54,33 @@ public class WGBorderGrower extends BukkitRunnable {
                     runReset();
                 }
             }, delay);
+            messager.spreadMsg(
+                    true,
+                    messager.concatArrays(
+                            messager.combineMessage(messager.getUnificationOccurred1(),
+                                    String.valueOf(
+                                            main.getServer().getWorlds().stream().mapToInt(world ->
+                                                    (int) world.getWorldBorder().getSize()).max().orElseThrow())),
+                            messager.combineMessage(messager.getUnificationOccurred2(), String.format("%.2f", (double) delay / 1200)),
+                            messager.getUnificationOccurred3()),
+                    true);
         } else { //Usual border growth chosen.
             int mainWorldGrowthSize = growthSize * worldMath.getMainWorld().growthMultiplier();
             main.addBlocksGrownThisHour(mainWorldGrowthSize);
             main.addBorderQuota(configuration.getInt("increment-growth-quota-by"));
 
-            for (WGWorld wgWorld : worldMath.getWorlds()) {
-                WorldBorder worldBorder = Objects.requireNonNull(server.getWorld(wgWorld.name())).getWorldBorder();
-                int newSize = worldMath.getNaturalSize(wgWorld);
-                main.getScheduler()
-                        .runTask(main, () ->
-                                worldBorder.setSize(newSize,
-                                        newSize - (int) worldBorder.getSize() / 2));
+            if (main.getUnificationManager().getRunnableQueue().isEmpty()) {
+                for (WGWorld wgWorld : worldMath.getWorlds()) {
+                    WorldBorder worldBorder = Objects.requireNonNull(server.getWorld(wgWorld.name())).getWorldBorder();
+                    int newSize = worldMath.getNaturalSize(wgWorld);
+                    main.getScheduler()
+                            .runTask(main, () ->
+                                    worldBorder.setSize(newSize,
+                                            newSize - (int) worldBorder.getSize() / 2));
+                }
+                main.getBossBar().growthIndicator();
             }
 
-            main.getBossBar().growthIndicator();
-            WGMessager messager = main.getMessager();
             messager.spreadMsg(
                     true,
                     messager.concatArrays(
@@ -80,7 +94,5 @@ public class WGBorderGrower extends BukkitRunnable {
                         true);
             }
         }
-
-        main.getEventCounterManager().addRunnable(this, 6000L);
     }
 }

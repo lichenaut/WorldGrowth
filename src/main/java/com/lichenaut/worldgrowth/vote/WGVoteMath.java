@@ -35,6 +35,7 @@ public class WGVoteMath {
 
         votes.clear();
         if (votesFor + votesAgainst == 0) return false;
+
         return votesFor / (votesFor + votesAgainst) * 100 > main.getConfiguration().getDouble("voting-threshold");
     }
 }

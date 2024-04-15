@@ -14,7 +14,7 @@ worlds:
   world:
     main: true
     name: "world"
-    #border-center: "0 64 0"
+    #border-center: "0 64 0" //TODO test functionality
     start-size: 32
     max-size: 16384
     growth-multiplier: 8
@@ -115,8 +115,6 @@ events:
   block-dispense-armor:
   block-drop-item:
   block-exp:
-    quota: 24
-    points: 1
   block-explode:
   block-fade:
   block-fertilize:
@@ -180,8 +178,6 @@ events:
     quota: 1
     points: 4
   ender-dragon-change-phase:
-    quota: 2
-    points: 1
   entity-air-change:
   entity-breed:
     quota: 16

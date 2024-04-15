@@ -24,8 +24,6 @@ public interface WGDBManager {
 
     void setGlobal(int quota, double points, int blocks) throws SQLException;
 
-    void clearGlobal() throws SQLException;
-
     void serializeRunnableQueue(WGRunnableManager runnableManager, String statementString) throws SQLException;
 
     void deserializeRunnableQueue(WGRunnableManager runnableManager, String statementString) throws SQLException;

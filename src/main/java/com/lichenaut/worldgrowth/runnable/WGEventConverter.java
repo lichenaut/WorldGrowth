@@ -15,9 +15,14 @@ public class WGEventConverter extends BukkitRunnable {
 
     @Override
     public void run() {
+        main.getEventCounterManager().addRunnable(this, 6000L);
+
         boolean willTopMaxGrowthPerHour = main.getWorldMath().willTopMaxGrowthPerHour();
+        int borderQuota = main.getBorderQuota();
         Set<WGPointEvent<?>> pointEvents = main.getPointEvents();
         for (WGPointEvent<?> pointEvent : pointEvents) {
+            if (main.getPoints() == borderQuota) break;
+
             int count = pointEvent.getCount();
             if (count == 0) continue;
 
@@ -25,19 +30,22 @@ public class WGEventConverter extends BukkitRunnable {
             if (count < quota) continue;
 
             pointEvent.setCount(count % quota);
-            //Convert met quotas to no points when the max block growth per hour is reached.
-            if (!willTopMaxGrowthPerHour) main.addPoints((double) count / quota * pointEvent.getPointValue() * main.getBoostMultiplier());
+            if (willTopMaxGrowthPerHour) continue;
+
+            main.addPoints((double) count / quota * pointEvent.getPointValue() * main.getBoostMultiplier());
+            if (main.getPoints() >= borderQuota) {
+                main.setPoints(borderQuota);
+                break;
+            }
         }
 
-        if (!main.getWorldMath().willTopMaxGrowthPerHour() && main.getPoints() >= main.getBorderQuota()) {
-            main.getBossBar().incomingIndicator();
+        if (!willTopMaxGrowthPerHour && main.getPoints() == borderQuota) {
+            if (main.isEnabled()) main.getBossBar().incomingIndicator();
             WGMessager messager = main.getMessager();
             messager.spreadMsg(
                     true,
                     messager.getGrowthIncoming(),
                     true);
         }
-
-        main.getEventCounterManager().addRunnable(this, 6000L);
     }
 }

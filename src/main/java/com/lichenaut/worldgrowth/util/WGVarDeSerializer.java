@@ -18,11 +18,10 @@ public class WGVarDeSerializer {
     private final WGRunnableManager eventCounterManager;
     private final WGDBManager databaseManager;
 
-    public void deserializeVariablesExceptCount() throws SQLException {
+    public void deserializeVariablesExceptCounts() throws SQLException {
         main.setBorderQuota(databaseManager.getQuota());
         main.setBlocksGrownThisHour(databaseManager.getBlocks());
         main.setPoints(databaseManager.getPoints());
-        databaseManager.clearGlobal();
     }
 
     public void deserializeCount(WGPointEvent<?> event) throws SQLException {

@@ -15,6 +15,7 @@ public class WGHourCounter extends BukkitRunnable {
 
     @Override
     public void run() {
+        main.getHourMaxManager().addRunnable(this, 72000L);
         if (main.getWorldMath().willTopMaxGrowthPerHour()) {
             WGMessager messager = main.getMessager();
             messager.spreadMsg(
@@ -23,6 +24,5 @@ public class WGHourCounter extends BukkitRunnable {
                     true);
         }
         main.setBlocksGrownThisHour(0);
-        main.getHourMaxManager().addRunnable(this, 72000L);
     }
 }
