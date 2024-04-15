@@ -39,7 +39,7 @@ public class WGBorderGrower extends BukkitRunnable {
         main.subtractPoints(borderQuota);
 
         WGMessager messager = main.getMessager();
-        if (main.getVoteMath().unificationThresholdMet()) { //Unification event chosen.
+        if (main.getVoteMath().unificationThresholdMet()) { //Unification Event chosen.
             long delay = borderQuota * configuration.getLong("ticks-per-point");
             WGRunnableManager unificationManager = main.getUnificationManager();
             unificationManager.addRunnable(new WGUnifier(main) {

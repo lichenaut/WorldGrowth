@@ -63,10 +63,10 @@ max-growth-quota: 1024
 unification-enabled: true
   #Mainly to expand the world border of The Nether for temporary structure access in the early game, but it also creates a lot of fun gameplay loops.
 
-#Each point adds this many ticks to the duration of the unification event.
+#Each point adds this many ticks to the duration of the Unification Event.
 ticks-per-point: 1200
 
-#The percentage of online players required to vote for the unification event for it to occur.
+#The percentage of online players required to vote for the Unification Event for it to occur.
 voting-threshold: 66.66
 
 
