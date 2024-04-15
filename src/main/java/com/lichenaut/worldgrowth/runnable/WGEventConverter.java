@@ -16,7 +16,6 @@ public class WGEventConverter extends BukkitRunnable {
     @Override
     public void run() {
         main.getEventCounterManager().addRunnable(this, 6000L);
-
         boolean willTopMaxGrowthPerHour = main.getWorldMath().willTopMaxGrowthPerHour();
         int borderQuota = main.getBorderQuota();
         Set<WGPointEvent<?>> pointEvents = main.getPointEvents();
@@ -32,15 +31,15 @@ public class WGEventConverter extends BukkitRunnable {
             pointEvent.setCount(count % quota);
             if (willTopMaxGrowthPerHour) continue;
 
-            main.addPoints((double) count / quota * pointEvent.getPointValue() * main.getBoostMultiplier());
+            main.addPoints((double) (count / quota) * pointEvent.getPointValue() * main.getBoostMultiplier());
             if (main.getPoints() >= borderQuota) {
                 main.setPoints(borderQuota);
                 break;
             }
         }
 
-        if (!willTopMaxGrowthPerHour && main.getPoints() == borderQuota) {
-            if (main.isEnabled()) main.getBossBar().incomingIndicator();
+        if (main.getPoints() == borderQuota && !willTopMaxGrowthPerHour && main.isEnabled()) {
+            main.getBossBar().incomingIndicator();
             WGMessager messager = main.getMessager();
             messager.spreadMsg(
                     true,

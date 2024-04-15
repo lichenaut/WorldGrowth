@@ -60,7 +60,7 @@ public abstract class WGUnifier extends BukkitRunnable {
         if (unificationQueued()) {
             concatMessage = messager.concatArrays(
                     concatMessage,
-                    messager.getUnificationQueued());
+                    messager.getRunnableQueued());
         }
 
         messager.spreadMsg(
@@ -73,22 +73,24 @@ public abstract class WGUnifier extends BukkitRunnable {
         if (delay < minutes*1200L) return;
 
         Bukkit.getScheduler().runTaskLaterAsynchronously(main, () -> {
-            BaseComponent[] concatMessage = messager.combineMessage(messager.getDeunificationWarning1(), String.valueOf(minutes));
+            BaseComponent[] concatMessage = messager.combineMessage(messager.getDeunificationWarning(), String.valueOf(minutes));
 
             if (minutes == 1) {
                 concatMessage = messager.concatArrays(
                         concatMessage,
-                        messager.getDeunificationWarning3());
+                        messager.getMinute());
             } else {
                 concatMessage = messager.concatArrays(
                         concatMessage,
-                        messager.getDeunificationWarning2());
+                        messager.getMinutes());
             }
+
+            concatMessage = messager.combineMessage(concatMessage, "! ");
 
             if (unificationQueued()) {
                 concatMessage = messager.concatArrays(
                         concatMessage,
-                        messager.getUnificationQueued());
+                        messager.getRunnableQueued());
             }
 
             messager.spreadMsg(

@@ -22,6 +22,7 @@ public class WGVarDeSerializer {
         main.setBorderQuota(databaseManager.getQuota());
         main.setBlocksGrownThisHour(databaseManager.getBlocks());
         main.setPoints(databaseManager.getPoints());
+        databaseManager.clearGlobal();
     }
 
     public void deserializeCount(WGPointEvent<?> event) throws SQLException {
@@ -42,5 +43,11 @@ public class WGVarDeSerializer {
             }
             databaseManager.setGlobal(main.getBorderQuota(), main.getPoints(), main.getBlocksGrownThisHour());
         }
+    }
+
+    public void serializeRunnableQueues() throws SQLException {
+        databaseManager.serializeRunnableQueue(main.getHourMaxManager(), "INSERT INTO `hour` (`delay`) VALUES (?)");
+        databaseManager.serializeRunnableQueue(main.getUnificationManager(), "INSERT INTO `unifications` (`delay`) VALUES (?)");
+        databaseManager.serializeRunnableQueue(main.getBoostManager(), "INSERT INTO `boosts` (`multiplier`, `delay`) VALUES (?, ?)");
     }
 }

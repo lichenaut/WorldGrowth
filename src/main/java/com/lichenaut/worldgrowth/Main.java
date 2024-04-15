@@ -8,10 +8,7 @@ import com.lichenaut.worldgrowth.db.WGSQLiteManager;
 import com.lichenaut.worldgrowth.event.WGKicker;
 import com.lichenaut.worldgrowth.event.WGMocker;
 import com.lichenaut.worldgrowth.event.WGPointEvent;
-import com.lichenaut.worldgrowth.runnable.WGBorderGrower;
-import com.lichenaut.worldgrowth.runnable.WGEventConverter;
-import com.lichenaut.worldgrowth.runnable.WGHourCounter;
-import com.lichenaut.worldgrowth.runnable.WGRunnableManager;
+import com.lichenaut.worldgrowth.runnable.*;
 import com.lichenaut.worldgrowth.util.*;
 import com.lichenaut.worldgrowth.vote.WGVoteMath;
 import com.lichenaut.worldgrowth.world.WGWorldMath;
@@ -52,6 +49,7 @@ public final class Main extends JavaPlugin {
     private final WGRunnableManager hourMaxManager = new WGRunnableManager(this);
     private final WGRunnableManager borderManager = new WGRunnableManager(this);
     private final WGRunnableManager unificationManager = new WGRunnableManager(this);
+    private final WGRunnableManager autosaveManager = new WGRunnableManager(this);
     private final WGBossBar bossBar = new WGBossBar(this);
     private final Set<WGPointEvent<?>> pointEvents = new HashSet<>();
     private int borderQuota;
@@ -102,6 +100,7 @@ public final class Main extends JavaPlugin {
                     if (hourMaxManager.getRunnableQueue().isEmpty()) hourMaxManager.addRunnable(new WGHourCounter(this), 0L);
                     eventCounterManager.addRunnable(new WGEventConverter(this), 200L);
                     borderManager.addRunnable(new WGBorderGrower(this), 600L);
+                    autosaveManager.addRunnable(new WGAutosaver(this), 35000L);
                 })
                 .exceptionallyAsync(e -> {
                     logging.error("Error while deserializing!");
@@ -117,9 +116,6 @@ public final class Main extends JavaPlugin {
                     return null;
                 });
 
-        mainFuture = worldFuture
-                .thenAcceptAsync(bordered -> logging.info("WorldGrowth loaded."));
-
         HandlerList.unregisterAll(kicker);
 
         WGMocker mocker = new WGMocker();
@@ -127,6 +123,9 @@ public final class Main extends JavaPlugin {
 
         voteMath = new WGVoteMath(this);
         wgCommand = Objects.requireNonNull(getCommand("wg"));
+
+        mainFuture = worldFuture
+                .thenAcceptAsync(bordered -> logging.info("WorldGrowth loaded."));
     }
 
     public void reloadWG() {
@@ -258,13 +257,12 @@ public final class Main extends JavaPlugin {
         mainFuture = mainFuture
                 .thenAcceptAsync(disabled -> {
                     try {
-                        varDeSerializer.serializeVariables();
-                        databaseManager.serializeRunnableQueue(hourMaxManager, "INSERT INTO `hour` (`delay`) VALUES (?)");
-                        databaseManager.serializeRunnableQueue(unificationManager, "INSERT INTO `unifications` (`delay`) VALUES (?)");
-                        databaseManager.serializeRunnableQueue(boostManager, "INSERT INTO `boosts` (`multiplier`, `delay`) VALUES (?, ?)");
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    } finally {
+                        autosaveManager.getRunnableQueue().get(0).cancel();
+                    } catch (Exception ignore) {}
+                    finally {
+                        autosaveManager.getRunnableQueue().clear();
+                        new WGAutosaver(this).run();
+
                         databaseManager.closeDataSource();
                     }
                 })

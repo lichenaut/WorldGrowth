@@ -5,6 +5,7 @@ import com.lichenaut.worldgrowth.util.WGMessager;
 import com.lichenaut.worldgrowth.world.WGWorld;
 import com.lichenaut.worldgrowth.world.WGWorldMath;
 import lombok.Getter;
+import net.md_5.bungee.api.chat.BaseComponent;
 import org.bukkit.Server;
 import org.bukkit.WorldBorder;
 import org.bukkit.configuration.Configuration;
@@ -26,7 +27,6 @@ public class WGBorderGrower extends BukkitRunnable {
     @Override
     public void run() {
         main.getBorderManager().addRunnable(this, 6000L);
-
         WGWorldMath worldMath = main.getWorldMath();
         if (worldMath.willTopMaxGrowthPerHour()) return;
 
@@ -54,6 +54,12 @@ public class WGBorderGrower extends BukkitRunnable {
                     runReset();
                 }
             }, delay);
+            BaseComponent[] minutes;
+            if (delay == 1200) {
+                minutes = messager.getMinute();
+            } else {
+                minutes = messager.getMinutes();
+            }
             messager.spreadMsg(
                     true,
                     messager.concatArrays(
@@ -62,7 +68,7 @@ public class WGBorderGrower extends BukkitRunnable {
                                             main.getServer().getWorlds().stream().mapToInt(world ->
                                                     (int) world.getWorldBorder().getSize()).max().orElseThrow())),
                             messager.combineMessage(messager.getUnificationOccurred2(), String.format("%.2f", (double) delay / 1200)),
-                            messager.getUnificationOccurred3()),
+                            messager.combineMessage(minutes, "!")),
                     true);
         } else { //Usual border growth chosen.
             int mainWorldGrowthSize = growthSize * worldMath.getMainWorld().growthMultiplier();

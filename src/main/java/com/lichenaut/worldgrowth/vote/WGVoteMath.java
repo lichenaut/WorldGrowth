@@ -1,6 +1,7 @@
 package com.lichenaut.worldgrowth.vote;
 
 import com.lichenaut.worldgrowth.Main;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.Player;
 
@@ -8,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+@Getter
 @RequiredArgsConstructor
 public class WGVoteMath {
 
@@ -21,9 +23,9 @@ public class WGVoteMath {
     public boolean unificationThresholdMet() {
         double votesFor = 0;
         double votesAgainst = 0;
-        for (Player p : main.getServer().getOnlinePlayers()) {
-            if (votes.containsKey(p.getUniqueId())) {
-                if (votes.get(p.getUniqueId())) {
+        for (Player player : main.getServer().getOnlinePlayers()) {
+            if (votes.containsKey(player.getUniqueId())) {
+                if (votes.get(player.getUniqueId())) {
                     votesFor++;
                 } else {
                     votesAgainst++;
@@ -37,5 +39,13 @@ public class WGVoteMath {
         if (votesFor + votesAgainst == 0) return false;
 
         return votesFor / (votesFor + votesAgainst) * 100 > main.getConfiguration().getDouble("voting-threshold");
+    }
+
+    public int getYesVotes() {
+        int votesFor = 0;
+        for (Player player : main.getServer().getOnlinePlayers()) {
+            if (votes.containsKey(player.getUniqueId()) && votes.get(player.getUniqueId())) votesFor++;
+        }
+        return votesFor;
     }
 }

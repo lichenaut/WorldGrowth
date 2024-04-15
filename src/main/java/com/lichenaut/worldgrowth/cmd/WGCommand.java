@@ -3,17 +3,21 @@ package com.lichenaut.worldgrowth.cmd;
 import com.lichenaut.worldgrowth.Main;
 import com.lichenaut.worldgrowth.runnable.WGBoost;
 import com.lichenaut.worldgrowth.runnable.WGRunnableManager;
+import com.lichenaut.worldgrowth.runnable.WGUnifier;
 import com.lichenaut.worldgrowth.util.WGMessager;
+import com.lichenaut.worldgrowth.vote.WGVoteMath;
+import com.lichenaut.worldgrowth.world.WGWorld;
 import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import javax.annotation.Nonnull;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.text.DecimalFormat;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public class WGCommand implements CommandExecutor {
@@ -22,6 +26,7 @@ public class WGCommand implements CommandExecutor {
     private final Main main;
     private final WGMessager messager;
     private final Set<String> voteOptions = new HashSet<>();
+    private final Map<UUID, Long> cooldowns = new HashMap<>();
 
     public WGCommand(Main main, WGMessager messager) {
         this.main = main;
@@ -43,22 +48,89 @@ public class WGCommand implements CommandExecutor {
         }
 
         switch (strings[0]) {
-            case "info" -> {
-                if (checkDisallowed(commandSender, "worldgrowth.info")) return true;
+            case "stats" -> {
+                if (checkDisallowed(commandSender, "worldgrowth.stats")) return true;
 
-                StringBuilder progressBar = new StringBuilder(Arrays.toString(messager.getInfoCommand1()) + "\n");
-                BaseComponent[] completeBarColor = messager.getCompleteBarColor();
-                BaseComponent[] incompleteBarColor = messager.getIncompleteBarColor();
-                BaseComponent[] completeBar = messager.combineMessage(completeBarColor, "=");
-                BaseComponent[] incompleteBar = messager.combineMessage(incompleteBarColor, "=");
-                int completeBars = (int) (33 * main.getPoints() / main.getBorderQuota());
-                int incompleteBars = 33 - completeBars;
-                double progressPercent = 100 * main.getPoints() / (double) main.getBorderQuota();
-                progressBar.append(Arrays.toString(messager.combineMessage(completeBarColor, "[")));
-                progressBar.append(Arrays.toString(completeBar).repeat(completeBars));
-                progressBar.append(Arrays.toString(incompleteBar).repeat(incompleteBars));
-                progressBar.append(Arrays.toString(messager.combineMessage(incompleteBarColor, "] " + String.format("%.2f", progressPercent))));
-                //TODO
+                if (commandSender instanceof Player player && isOnCooldown(player) && !player.isOp()) {
+                    commandFuture = commandFuture
+                            .thenAcceptAsync(processed -> messager.sendMsg(commandSender, messager.getCooldownCommand(), false));
+                    return true;
+                }
+
+                if (commandSender instanceof Player player) {
+                    cooldowns.put(player.getUniqueId(), System.currentTimeMillis());
+                }
+
+                commandFuture = commandFuture
+                        .thenAcceptAsync(processed -> {
+                            List<BaseComponent> components = new ArrayList<>(Arrays.asList(messager.getStatsCommand1()));
+                            components.add(new TextComponent("\n"));
+                            BaseComponent[] incompleteBarColor = messager.getIncompleteBarColor();
+                            BaseComponent[] completeBar = messager.combineMessage(messager.getCompleteBarColor(), "=");
+                            BaseComponent[] incompleteBar = messager.combineMessage(incompleteBarColor, "=");
+
+                            WGVoteMath voteMath = main.getVoteMath();
+                            int yesVotes = voteMath.getYesVotes();
+                            int totalVotes = voteMath.getVotes().size();
+                            int completeBars;
+                            double progressPercent;
+                            if (totalVotes == 0) {
+                                completeBars = 0;
+                                progressPercent = 0.00;
+                            } else {
+                                completeBars = 33 * yesVotes / totalVotes;
+                                progressPercent = 100 * yesVotes / (double) totalVotes;
+                            }
+                            int incompleteBars = 33 - completeBars;
+                            buildBar(components, incompleteBarColor, completeBar, incompleteBar, completeBars, incompleteBars);
+                            components.add(new TextComponent(String.format("%.2f", progressPercent) + "%\n"));
+                            components.addAll(Arrays.asList(messager.getStatsCommand2()));
+                            components.add(new TextComponent(main.getConfiguration().getDouble("voting-threshold") + "%\n"));
+                            if (commandSender instanceof Player player) {
+                                Map<UUID, Boolean> votes = voteMath.getVotes();
+                                UUID uuid = player.getUniqueId();
+                                String vote = votes.containsKey(uuid) ?
+                                        votes.get(uuid) != null ?
+                                                votes.get(uuid) ? "yes" : "no" : "no" : "no";
+                                components.addAll(Arrays.asList(messager.getStatsCommand3()));
+                                components.add(new TextComponent(vote + "\n"));
+                            }
+                            double duration = main.getUnificationManager().getRunnableQueue().stream().mapToDouble(r -> {
+                                        if (r == main.getUnificationManager().getRunnableQueue().stream().findFirst().orElse(null)) {
+                                            return r.delay() - (System.currentTimeMillis() - (double) ((WGUnifier) r.runnable()).getTimeStarted()) / 50;
+                                        } else {
+                                            return r.delay();
+                                        }
+                                    })
+                                    .sum() / 1200;
+                            String unificationsDuration = String.format("%.2f", duration);
+                            components.addAll(Arrays.asList(messager.getStatsCommand4()));
+                            components.add(new TextComponent(unificationsDuration + "\n\n"));
+
+                            double points = main.getPoints();
+                            int borderQuota = main.getBorderQuota();
+                            completeBars = (int) (33 * points / borderQuota);
+                            incompleteBars = 33 - completeBars;
+                            buildBar(components, incompleteBarColor, completeBar, incompleteBar, completeBars, incompleteBars);
+                            components.add(new TextComponent(new DecimalFormat("#.##").format(points) + "/" + borderQuota + "\n"));
+                            Server server = main.getServer();
+                            for (WGWorld wgWorld : main.getWorldMath().getWorlds()) {
+                                String worldName = wgWorld.name();
+                                components.add(new TextComponent(messager.getStatsCommand5()));
+                                components.add(new TextComponent(worldName));
+                                components.add(new TextComponent(messager.getStatsCommand6()));
+                                components.add(new TextComponent(String.format("%.2f", Objects.requireNonNull(server.getWorld(worldName)).getWorldBorder().getSize())));
+                                components.add(new TextComponent("\n"));
+                            }
+
+                            components.add(new TextComponent("\n"));
+                            components.addAll(Arrays.asList(messager.getStatsCommand7()));
+                            components.add(new TextComponent(String.valueOf(main.getBoostMultiplier())));
+
+                            BaseComponent[] baseComponents = new BaseComponent[components.size()];
+                            components.toArray(baseComponents);
+                            messager.sendMsg(commandSender, baseComponents, false);
+                        });
 
                 return true;
             }
@@ -163,5 +235,20 @@ public class WGCommand implements CommandExecutor {
 
     private boolean checkDisallowed(CommandSender sender, String permission) {
         return sender instanceof Player && !sender.hasPermission(permission);
+    }
+
+    private boolean isOnCooldown(Player player) {
+        if (cooldowns.containsKey(player.getUniqueId())) {
+            return System.currentTimeMillis() < cooldowns.get(player.getUniqueId()) + 20000;
+        }
+
+        return false;
+    }
+
+    private void buildBar(List<BaseComponent> components, BaseComponent[] incompleteBarColor, BaseComponent[] completeBar, BaseComponent[] incompleteBar, int completeBars, int incompleteBars) {
+        components.addAll(Arrays.asList(messager.combineMessage(incompleteBarColor, "[")));
+        for (int i = 0; i < completeBars; i++) components.addAll(Arrays.asList(completeBar));
+        for (int i = 0; i < incompleteBars; i++) components.addAll(Arrays.asList(incompleteBar));
+        components.addAll(Arrays.asList(messager.combineMessage(incompleteBarColor, "] ")));
     }
 }

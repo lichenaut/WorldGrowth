@@ -17,8 +17,8 @@ public class WGTabCompleter implements TabCompleter {
         if (strings.length == 1) {
             if (commandSender instanceof Player player) {
                 if (player.hasPermission("worldgrowth.help")) options.add("help");
-                if (player.hasPermission("worldgrowth.info")) options.add("info");
                 if (player.hasPermission("worldgrowth.reload")) options.add("reload");
+                if (player.hasPermission("worldgrowth.stats")) options.add("stats");
                 if (player.hasPermission("worldgrowth.vote")) options.add("vote");
             }
         } else if (strings.length == 2) {

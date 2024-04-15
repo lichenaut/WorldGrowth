@@ -29,19 +29,19 @@ public class WGBossBar {
     public void growthIndicator() {
         BossBar bossBar = Bukkit.createBossBar(ChatColor.GREEN  + "" +  ChatColor.BOLD + "Growth Event!", BarColor.GREEN, BarStyle.SEGMENTED_12);
         bossBar.setProgress(0.0);
-        showIndicator(bossBar, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.1F, 0.5F);
+        showIndicator(bossBar, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.25F, 0.5F);
     }
 
     public void unificationIndicator() {
         BossBar bossBar = Bukkit.createBossBar(ChatColor.YELLOW  + "" +  ChatColor.BOLD + "Unification Event!", BarColor.YELLOW, BarStyle.SEGMENTED_12);
         bossBar.setProgress(0.0);
-        showIndicator(bossBar, Sound.BLOCK_NOTE_BLOCK_BELL, 0.25F, 0.5F);
+        showIndicator(bossBar, Sound.BLOCK_NOTE_BLOCK_BELL, 0.5F, 0.5F);
     }
 
     public void deunificationIndicator() {
         BossBar bossBar = Bukkit.createBossBar(ChatColor.RED  + "" +  ChatColor.BOLD + "Unification Event End!", BarColor.RED, BarStyle.SEGMENTED_12);
         bossBar.setProgress(1.0);
-        showIndicator(bossBar, Sound.BLOCK_NOTE_BLOCK_BIT, 0.25F, 0.5F);
+        showIndicator(bossBar, Sound.BLOCK_NOTE_BLOCK_BIT, 0.5F, 0.5F);
     }
 
     public void showIndicator(@Nullable BossBar bossBar, Sound sound, float volume, float pitch) {
@@ -51,7 +51,7 @@ public class WGBossBar {
                 bossBar.addPlayer(player);
             });
             bossBar.setVisible(true);
-            scheduler.runTaskLaterAsynchronously(main, () -> bossBar.setProgress(0.7), 12L);
+            scheduler.runTaskLaterAsynchronously(main, () -> bossBar.setProgress(0.7), 16L);
             scheduler.runTaskLaterAsynchronously(main, () -> {
                 bossBar.setVisible(false);
                 bossBar.removeAll();

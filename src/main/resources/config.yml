@@ -284,7 +284,7 @@ events:
     quota: 256
     points: 1
   sheep-regrow-wool:
-    quota: 48
+    quota: 128
     points: 1
   slime-split:
   spawner-spawn:

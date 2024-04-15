@@ -144,6 +144,15 @@ public class WGMySQLManager implements WGDBManager {
     }
 
     @Override
+    public void clearGlobal() throws SQLException {
+        try (Connection connection = dataSource.getConnection()) {
+            try (Statement statement = connection.createStatement()) {
+                statement.execute("DELETE FROM `global`");
+            }
+        }
+    }
+
+    @Override
     public void serializeRunnableQueue(WGRunnableManager runnableManager, String statementString) throws SQLException {
         try (Connection connection = dataSource.getConnection()) {
             try (PreparedStatement statement = connection.prepareStatement(statementString)) {

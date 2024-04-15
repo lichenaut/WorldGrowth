@@ -34,10 +34,13 @@ public class WGMessager {
     private BaseComponent[] onlyPlayerCommand;
     private BaseComponent[] onlyConsoleCommand;
     private BaseComponent[] usageBoostCommand;
+    private BaseComponent[] cooldownCommand;
+    private BaseComponent[] minute;
+    private BaseComponent[] minutes;
     private BaseComponent[] boostedGains1;
     private BaseComponent[] boostedGains2;
-    private BaseComponent[] boostedGains3;
     private BaseComponent[] deboostedGains;
+    private BaseComponent[] runnableQueued;
     private BaseComponent[] growthIncoming;
     private BaseComponent[] voteYesCommand;
     private BaseComponent[] voteNoCommand;
@@ -48,22 +51,17 @@ public class WGMessager {
     private BaseComponent[] pointsOn;
     private BaseComponent[] unificationOccurred1;
     private BaseComponent[] unificationOccurred2;
-    private BaseComponent[] unificationOccurred3;
-    private BaseComponent[] deunificationWarning1;
-    private BaseComponent[] deunificationWarning2;
-    private BaseComponent[] deunificationWarning3;
-    private BaseComponent[] unificationQueued;
+    private BaseComponent[] deunificationWarning;
     private BaseComponent[] deunificationOccurred;
-    private BaseComponent[] infoCommand1;
     private BaseComponent[] incompleteBarColor;
     private BaseComponent[] completeBarColor;
-    private BaseComponent[] infoCommand2;
-    private BaseComponent[] infoCommand3;
-    private BaseComponent[] infoCommand4;
-    private BaseComponent[] infoCommand5;
-    private BaseComponent[] infoCommand6;
-    private BaseComponent[] infoCommandArrow;
-    private BaseComponent[] infoCommand7;
+    private BaseComponent[] statsCommand1;
+    private BaseComponent[] statsCommand2;
+    private BaseComponent[] statsCommand3;
+    private BaseComponent[] statsCommand4;
+    private BaseComponent[] statsCommand5;
+    private BaseComponent[] statsCommand6;
+    private BaseComponent[] statsCommand7;
 
     public void loadLocaleMessages(String localesFolderString) throws IOException {
         properties.clear();
@@ -77,10 +75,13 @@ public class WGMessager {
             onlyPlayerCommand = loadMessage("onlyPlayerCommand");
             onlyConsoleCommand = loadMessage("onlyConsoleCommand");
             usageBoostCommand = loadMessage("usageBoostCommand");
+            cooldownCommand = loadMessage("cooldownCommand");
+            minute = loadMessage("minute");
+            minutes = loadMessage("minutes");
             boostedGains1 = loadMessage("boostedGains1");
             boostedGains2 = loadMessage("boostedGains2");
-            boostedGains3 = loadMessage("boostedGains3");
             deboostedGains = loadMessage("deboostedGains");
+            runnableQueued = loadMessage("runnableQueued");
             growthIncoming = loadMessage("growthIncoming");
             voteYesCommand = loadMessage("voteYesCommand");
             voteNoCommand = loadMessage("voteNoCommand");
@@ -91,22 +92,17 @@ public class WGMessager {
             pointsOn = loadMessage("pointsOn");
             unificationOccurred1 = loadMessage("unificationOccurred1");
             unificationOccurred2 = loadMessage("unificationOccurred2");
-            unificationOccurred3 = loadMessage("unificationOccurred3");
-            deunificationWarning1 = loadMessage("deunificationWarning1");
-            deunificationWarning2 = loadMessage("deunificationWarning2");
-            deunificationWarning3 = loadMessage("deunificationWarning3");
-            unificationQueued = loadMessage("unificationQueued");
+            deunificationWarning = loadMessage("deunificationWarning");
             deunificationOccurred = loadMessage("deunificationOccurred");
-            infoCommand1 = loadMessage("infoCommand1");
             incompleteBarColor = loadMessage("incompleteBarColor");
             completeBarColor = loadMessage("completeBarColor");
-            infoCommand2 = loadMessage("infoCommand2");
-            infoCommand3 = loadMessage("infoCommand3");
-            infoCommand4 = loadMessage("infoCommand4");
-            infoCommand5 = loadMessage("infoCommand5");
-            infoCommand6 = loadMessage("infoCommand6");
-            infoCommandArrow = loadMessage("infoCommandArrow");
-            infoCommand7 = loadMessage("infoCommand7");
+            statsCommand1 = loadMessage("statsCommand1");
+            statsCommand2 = loadMessage("statsCommand2");
+            statsCommand3 = loadMessage("statsCommand3");
+            statsCommand4 = loadMessage("statsCommand4");
+            statsCommand5 = loadMessage("statsCommand5");
+            statsCommand6 = loadMessage("statsCommand6");
+            statsCommand7 = loadMessage("statsCommand7");
         }
     }
 
@@ -199,6 +195,9 @@ public class WGMessager {
                     break;
             }
         }
+
+        if (key.endsWith("Color") || key.startsWith("minute")) return builder.create();
+
         builder.append(" ");
         return builder.create();
     }
