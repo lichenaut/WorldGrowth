@@ -1,6 +1,8 @@
 # WorldGrowth
 WorldGrowth sets and expands world borders as a gameplay mechanic.
 
+![WorldGrowth Demo GIF](wgdemo.gif)
+
 [![Github All Releases](https://img.shields.io/github/downloads/lichenaut/WorldGrowth/total.svg)]()
 
 ## Unification Events
