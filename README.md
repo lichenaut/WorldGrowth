@@ -1,5 +1,5 @@
 # WorldGrowth
-WorldGrowth sets and expands world borders as a gameplay mechanic.
+WorldGrowth sets and changes world borders as a gameplay mechanic.
 
 ![WorldGrowth Demo GIF](wgdemo.gif)
 
