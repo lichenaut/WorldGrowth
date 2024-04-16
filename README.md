@@ -6,7 +6,7 @@ WorldGrowth sets and changes world borders as a gameplay mechanic.
 [![Github All Releases](https://img.shields.io/github/downloads/lichenaut/WorldGrowth/total.svg)]()
 
 ## Lore
-The idea for WorldGrowth was inspired by my watching of WadZee's "Minecraft, But I Can't Leave One Chunk" series, please check it out to see what you can do with this plugin! 
+The idea for WorldGrowth was inspired by my watching of WadZee's "Minecraft, But I Can't Leave One Chunk" series, please click the image below to see what you can do with this plugin! 
 [![Watch the video](https://img.youtube.com/vi/S6yBK5LcO68/maxresdefault.jpg)](https://www.youtube.com/watch?v=S6yBK5LcO68)
 
 ## Point System
